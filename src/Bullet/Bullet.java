@@ -55,6 +55,12 @@ public class Bullet implements BulletInterface{
 				left = true;
 			}
 		}
+	}	
+
+	public boolean equals(Bullet bullet) {
+		if (this.getBulletPosition().getX() == bullet.getBulletPosition().getX() && this.getBulletPosition().getY() == bullet.getBulletPosition().getY())
+			return true;
+		return false;
 	}
 
 

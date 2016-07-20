@@ -1,11 +1,19 @@
 package Characters;
 
 public enum Difficulty {
-	EASY(100),
-	MEDIUM(200),
-	HARD(300),
-	EXPERT(350),
-	INSANE(400);
+	
+	// svaki level tezine moram da pomnozim sa 4
+	// zato sto kad ispalim jedan metak i pogodim jednog enemija
+	// na enemiju se kolizija sa metkom manifestuje 4 puta
+	// zbog niti
+	// ili tako da resim, ili da smislim neko normalno resenje!!
+	// bolje da smislim nesto, al o tom po tom. 
+	
+	EASY(150), 
+	MEDIUM(250), 
+	HARD(350), 
+	EXPERT(450), 
+	INSANE(550); 
 	
 	private int diffLevel;
 	

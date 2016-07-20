@@ -13,17 +13,19 @@ import Bullet.Bullet;
 
 
 public class Player extends Character{
-	public static final int STEP = 10;
-	public static final int JUMP = STEP * 5;
+	public static final int STEP = 64/2; // BIO 10
+	public static final int JUMP = 68; // bio : STEP * 5;
 	
-	private int widthOfPlayer;
-	private int heightOfPlayer;
-	private BufferedImage frontImg, leftImg, rightImg;
+	private static int widthOfPlayer;
+	private static int heightOfPlayer;
+	
+	private BufferedImage frontImg, leftImg, rightImg; // MOZE DA BUDE STATIC A I NE MORA, POSTO SE SAMO JEDNOM INSTANCIRA PLAYER
 	
 	private List<Bullet> firedBullets = new ArrayList<Bullet>();
 	
 	public Player(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {
 		super(startPosition, health, speed, numberOfLives, collision);
+		
 		frontImg = setImage("player");
 		leftImg = setImage("playerLeft");
 		rightImg = setImage("playerRight");
@@ -31,8 +33,7 @@ public class Player extends Character{
 		
 		heightOfPlayer = Character.IMG_HEIGHT;
     	widthOfPlayer = Character.IMG_WIDTH;
-	}
-
+	}	
 	
 	@Override
 	public void moveLeft() {
@@ -48,7 +49,7 @@ public class Player extends Character{
 	}
 
 	@Override
-	public void moveRight() {
+	public void moveRight() {		
 		Point moveRight = new Point(super.getCurrentPosition());
 		int x = (int)moveRight.getX();
 		int y = (int)moveRight.getY();
@@ -95,10 +96,6 @@ public class Player extends Character{
 	    	String path = System.getProperty("user.dir") + "/bin/Resources/Images/" + imageStr + ".png";
 	    	File file = new File(path);
 	    	image = ImageIO.read(file);
-	    	/*
-	    	heightOfPlayer = image.getHeight();
-	    	widthOfPlayer = image.getWidth(); 
-	    	*/
 	    	return image;
 	    	
 	    } catch (IOException ioe) {
@@ -122,15 +119,19 @@ public class Player extends Character{
 		firedBullets.add(bullet);
 	    bullet.spawnBullet(direction);
 	}
-
-	public Bullet destroyBullet(Bullet bullet) {
-		boolean flag = false;
-		if ((int)bullet.getBulletPosition().getX() + Bullet.BULLET_WIDTH + Bullet.BULLET_SPEED >= Character.SCREEN_WIDTH){
-			bullet.getBulletPosition().setLocation(1000, 1000);
-			flag = true;
+	
+	public void destroyBulletWhenHitObstacle(int indexOfBullet) {
+		firedBullets.set(indexOfBullet, null);
+	}
+	
+	public void destroyBullets(){
+		for (int i = 0; i < firedBullets.size(); i++) {
+			if (firedBullets.get(i) != null){
+				Bullet tmpBullet = firedBullets.get(i);
+				if (tmpBullet.getBulletPosition().getX() >= Character.SCREEN_WIDTH || tmpBullet.getBulletPosition().getX() <= 0)
+					firedBullets.remove(i);
+			}
 		}
-		if (flag) return null;
-		return bullet;
 	}
 	
 	public void moveBullets(){
@@ -140,25 +141,22 @@ public class Player extends Character{
 		
 		for (Bullet bullet : firedBullets) {
 			
-			// PROVERITI DA LI RADI U LEVO, POSTO NECE METKOVI DA SE KRECU U LEVO!!!
 			if (bullet != null){
+				
+				move = new Point(bullet.getBulletPosition());
+				x = (int)move.getX();
+				y = (int)move.getY();
+				
 				if (bullet.isLeft() == true){ // kad metkovi idu u levo
-					move = new Point(bullet.getBulletPosition());
-					x = (int)move.getX();
-					y = (int)move.getY();
 					
-					if (x - Bullet.BULLET_SPEED >= 0){
+					if (x - Bullet.BULLET_SPEED >= 0 - Bullet.BULLET_WIDTH ){
 						move.setLocation(x - Bullet.BULLET_SPEED , y);
 					}else{
 						bullet = null;
 					}
 				}else{	// kad metkovi idu u desno
 					
-					move = new Point(bullet.getBulletPosition());
-					x = (int)move.getX();
-					y = (int)move.getY();
-					
-					if (x + Bullet.BULLET_SPEED + Bullet.BULLET_WIDTH <= getWidth()){   
+					if (x + Bullet.BULLET_SPEED - Bullet.BULLET_WIDTH <= getWidth()){  
 						move.setLocation(x + Bullet.BULLET_SPEED, y);
 					}else{
 						bullet = null;
@@ -170,57 +168,16 @@ public class Player extends Character{
 		}
 	}
 	
-	
-	
-	/*
-	public void moveBullets(){
-		Point move;
-		int x;
-		int y;
-		
-		for (Bullet bullet : firedBullets) {
-			
-			// PROVERITI DA LI RADI U LEVO, POSTO NECE METKOVI DA SE KRECU U LEVO!!!
-			if (bullet != null){
-				if (bullet.isLeft() == true){ // kad metkovi idu u levo
-					move = new Point(bullet.getBulletPosition());
-					x = (int)move.getX();
-					y = (int)move.getY();
-					
-					if (x - Bullet.BULLET_SPEED >= 0){
-						move.setLocation(x - Bullet.BULLET_SPEED , y);
-					}
-					
-					bullet.getBulletPosition().setLocation(move);
-					
-				}else{	// kad metkovi idu u desno
-					
-					move = new Point(bullet.getBulletPosition());
-					x = (int)move.getX();
-					y = (int)move.getY();
-					
-					if (x + Bullet.BULLET_SPEED + Bullet.BULLET_WIDTH <= getWidth()){   
-						move.setLocation(x + Bullet.BULLET_SPEED, y);
-					}
-					
-					bullet.getBulletPosition().setLocation(move);
-				}
-			}
-		}
-	}
-	*/
-	
 	public List<Bullet> getFiredBullets() {
 		return firedBullets;
 	}
 	
-	public int getWidthOfPlayer() {
+	public static int getWidthOfPlayer() {
 		return widthOfPlayer;
 	}
 
-	public int getHeightOfPlayer() {
+	public static int getHeightOfPlayer() {
 		return heightOfPlayer;
 	}
-	
 	
 }

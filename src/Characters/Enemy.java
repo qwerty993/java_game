@@ -8,7 +8,8 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
-import Sound.Sounds;
+
+//import Sound.Sounds;
 import Bullet.Bullet;
 
 public class Enemy extends Character implements Runnable{
@@ -23,7 +24,16 @@ public class Enemy extends Character implements Runnable{
 	private int widthOfEnemy;
 	private boolean enemyAlive;
 	
-
+	private int borderLeft;
+	private int borderRight;
+	
+	//private volatile boolean enemyAlive; // PROBA
+	
+	
+	// obrisi posle, SLUZI SAMO ZA PROVERU
+	static int brojEnemija = 0;
+	int rbrEnemija;
+	// ---------------------------------
 	
 	public Enemy(Point startPosition) {
 		this(startPosition, Difficulty.EASY.getDiffLevel(), 4f, 1, false);
@@ -44,11 +54,22 @@ public class Enemy extends Character implements Runnable{
 		
 		heightOfEnemy = Character.IMG_HEIGHT;
     	widthOfEnemy = Character.IMG_WIDTH;
+    	
+    	
+    	//OBRISI POSLE
+    	rbrEnemija = ++brojEnemija;
+    	// ---------------------------------
 	}
 
 	@Override
 	public void run() {
-		while (enemyAlive == true){
+		while (!Thread.currentThread().isInterrupted() && enemyAlive) {
+			
+		//while (enemyAlive == true){
+		//while (!Thread.currentThread().isInterrupted()) {
+		
+		// random kretanje levo desno
+
 			if (r.nextInt(2) == 0){
 				try {
 					Thread.sleep(r.nextInt((SPEED * (int)getSpeed()) * 2));
@@ -64,25 +85,34 @@ public class Enemy extends Character implements Runnable{
 				}
 				moveRight();
 			}
+		
 		}
 		
+		//DEBUG
+		System.out.println("ENEMY number: " + rbrEnemija + " --> DEAD");
+		// ---------------------------------
 	}
+		
+
+	
+	// KOLIZIJA ENEMIJA I BULLETA NE RADI KAKO TREBA, NEKAD JAVI NULL_POINTER_EXCEPTION
 	
 	public void collisonWithBullet(boolean collisionBetweenEnemyAndBullet){
 		if (collisionBetweenEnemyAndBullet == true){
 			this.setCollision(true);
 			int currentHealth = getHealth() - Bullet.BULLET_DAMAGE - r.nextInt(Bullet.BULLET_DAMAGE);
 			
-			/* DEBUG
-			System.out.println("Sudario se metak sa enemijem");
-			System.out.println("currentHEALTHfromBULLET: " + currentHealth);
-			*/
+			// DEBUG
+			System.out.println("bullet HIT ENEMY num: " + rbrEnemija);
+			System.out.println("Enemy (" + rbrEnemija + ") current HEALTH after HIT : " + currentHealth);
+			
 			
 			if (currentHealth > 0){
 				setHealth(currentHealth);
 				setCollision(false);
 				enemyAlive = true;	// this enemy je ziv
 			}else{
+				// MORA PRVO ZVUK DA SE SREDI
 				//Sounds.EXPLOSION.play();
 				setHealth(0);
 				setNumberOfLives(0);
@@ -113,14 +143,22 @@ public class Enemy extends Character implements Runnable{
 		}
 	}
 		
+	
+	
+	public void setEnemyMoveBorders(int leftX, int rightX){
+		borderLeft = leftX;
+		borderRight = rightX;
+	}
+	
+	
 	@Override
 	public void moveLeft() {
 		Point moveLeft = new Point(super.getCurrentPosition());
 		int x = (int)moveLeft.getX();
 		int y = (int)moveLeft.getY();
 		
-		if (x - STEP * SPEED >= 0){
-			moveLeft.setLocation(x - STEP , y);
+		if (x - STEP >= borderLeft + 10){ 		// >= 0
+ 			moveLeft.setLocation(x - STEP , y);
 		}
 		
 		super.setCurrentPosition(moveLeft);
@@ -132,8 +170,9 @@ public class Enemy extends Character implements Runnable{
 		int x = (int)moveRight.getX();
 		int y = (int)moveRight.getY();
 		
-		if (x + STEP * SPEED/2 + widthOfEnemy <= getWidth()){ 
-			moveRight.setLocation(x + STEP , y);
+	
+		if (x + STEP <= borderRight - 10){  // <= getWidth()
+			moveRight.setLocation(x + STEP, y);
 		}
 		
 		super.setCurrentPosition(moveRight);
@@ -201,5 +240,4 @@ public class Enemy extends Character implements Runnable{
 	public void setEnemyAlive(boolean enemyAlive) {
 		this.enemyAlive = enemyAlive;
 	}
-	
 }

@@ -6,6 +6,7 @@ import java.awt.Event;
 import java.awt.GridLayout;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,9 +24,8 @@ import Engine.Engine;
 public class GUI extends JFrame implements KeyEventDispatcher {
 	private static final long serialVersionUID = 1L;
 
-	private static final int width = 800; // SVGA resolution 800x600
-	private static final int height = 600;
-	
+	private static final int WIDTH = 800; // SVGA resolution 800x600
+	private static final int HEIGHT = 600;
 	
 	// Uzimam dimenzije ekrana da bih pozicionirao prozor na centar ekrana.
 	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -40,6 +40,12 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	// END OF FOOTER PART
 	
 
+	// KEYPRESSED COMBINATON LOGIC
+	private boolean space = false;
+	private boolean left = false;
+	private boolean right = false;
+	//
+	
 	
 	Timer timer;
 	Canvas canvas;
@@ -48,21 +54,25 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	public GUI() {
 		setTitle("Kill them all!");
 		
-		setBounds((int) ((widthScr - width) / 2), (int) ((heightScr - height) / 2), width, height);
-
+		//setBounds((int) ((widthScr - WIDTH) / 2), (int) ((heightScr - HEIGHT) / 2), WIDTH, HEIGHT);
+		//setBounds(0, 0, WIDTH, HEIGHT);
+		
 		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		manager.addKeyEventDispatcher(this);
 
-		engine = new Engine(1);
-			
-		canvas = new Canvas(engine.getPlayer(), engine.getEnemies());
+		engine = new Engine(1); 
+		
+		canvas = new Canvas(Engine.getPlayer(), engine.getEnemies());
 
 		
 		timer = new Timer(20, new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-		        engine.getPlayer().moveBullets();
+		        Engine.getPlayer().moveBullets();
+		        engine.bulletOverlapsWithObstacle();
+		        
+		        engine.keepPlayerWithinBorders(Engine.getPlayer());
 		        refreshGUI();
 				canvas.repaint();
 			}			
@@ -73,20 +83,24 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		getContentPane().add(canvas);
 		
 		setFooter();
-		//pack();
+		pack();
 		setVisible(true);
 		setResizable(false);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setLocationRelativeTo(null);
+		//setLocationRelativeTo(null);
+		
+		setPreferredSize(new Dimension(WIDTH, HEIGHT));
+		setLocation(new Point((int) ((widthScr - WIDTH) / 2), (int) ((heightScr - HEIGHT) / 2)));
 	}
 
 	public void setFooter() {
 		footer = new JPanel(new GridLayout(1, 3, 4, 4));
-		footer.setPreferredSize(new Dimension(width, 32));
+		footer.setPreferredSize(new Dimension(WIDTH, 32));
 		
 		lblHealth = new JLabel("HEALTH: 100%", SwingConstants.CENTER);
 		lblLives = new JLabel("LIVES: 3", SwingConstants.CENTER); 
 		lblCurrentLevel = new JLabel("LEVEL: 1", SwingConstants.CENTER);
+		
 		/* 	
 		  	Dodam u konstruktor SwingConstants.CENTER i onda nema potrebe za podesavanjem  
 		 	lblLives.setVerticalAlignment(SwingConstants.CENTER);
@@ -96,15 +110,19 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		footer.add(lblHealth);
 		footer.add(lblLives);
 		footer.add(lblCurrentLevel);
-		
+			
 		getContentPane().add(footer, BorderLayout.SOUTH);
 	}
 
+	
+	
 	private void refreshFooter(){
-		lblHealth.setText("HEALTH: " + engine.getPlayer().getHealth());
-		lblLives.setText("LIVES: " + engine.getPlayer().getNumberOfLives());
-		lblCurrentLevel.setText("LEVEL: " + engine.getLevel());
+		lblHealth.setText("HEALTH: " + Engine.getPlayer().getHealth() + "%");
+		lblLives.setText("LIVES: " + Engine.getPlayer().getNumberOfLives());
+		lblCurrentLevel.setText("LEVEL: " + Engine.getLevel());
 	}
+	
+	
 	
 	public void refreshGUI(){	
 		if (engine.isEnd()){
@@ -112,10 +130,9 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		}
 		
 		if (engine.isNextLevel()){
-			engine.init(engine.getLevel());
+			engine.init(Engine.getLevel());
 			System.out.println("Next level activated!");
-			canvas.removeAll();
-			canvas.revalidate();
+			refreshFooter();	// dodao refreshFooter() jer je mnogo kasnio sa promenom LVL-a 
 			canvas.repaint();
 		}
 		
@@ -130,93 +147,109 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 			refreshFooter();
 	}
 	
-	private void dialogBoxHandler(String message){
+	private synchronized void dialogBoxHandler(String message){
 		int response = JOptionPane.showConfirmDialog(this, message, "Game over!", JOptionPane.YES_NO_OPTION);
 		timer.stop();
 		
+		//engine.stopThreads();
+		
+		//engine.killAllThreads();
+		
+		// stopiraj sve tredove
+		// engine.stopThreads();
+		// MNOGO PUTA SE POJAVI DIALOG BOX, TO NE SME DA SE DESAVA, PROVERITI U ENGINU STOP_THREADS() !!!!
+		
 		if (response == JOptionPane.YES_OPTION){
-			timer.start();
+			System.out.println("ovde puca");
 			engine.init(1);
+			timer.start();
 			canvas.removeAll();
 			canvas.revalidate();
 			canvas.repaint();
+			refreshGUI();
 		}else{
-			dispose();
+			engine.stopThreads();
+			System.exit(0);
 		}
 	}
 	
+		
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
-		boolean space = false;
-		boolean left = false;
-		boolean right = false;
-		
 		if (e.getID() == Event.KEY_RELEASE) {
-			if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT){
-				// kad se puste strlice levo i desno onda se postavi player front image
-				engine.getPlayer().setImageByString("player");
-				
-				if (e.getKeyCode() == KeyEvent.VK_LEFT){
-					left = false;
-				}else{
-					right = false;
-				}
-			}
+			
 			if (e.getKeyCode() == KeyEvent.VK_SPACE){
 				space = false;
 			}
-						
+			
+			if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT){
+				// kad se puste strlice levo i desno onda se postavi player front image
+				Engine.getPlayer().setImageByString("player");
+				
+				if (e.getKeyCode() == KeyEvent.VK_LEFT){
+					left = false;
+				}else if (e.getKeyCode() == KeyEvent.VK_RIGHT){
+					right = false;
+				}
+			}						
 		}
 		
 		if (e.getID() == Event.KEY_PRESS) {
 			switch (e.getKeyCode()) {
 			
 				case KeyEvent.VK_LEFT:
-					engine.getPlayer().setImageByString("playerLeft");
-					engine.getPlayer().moveLeft();
+					Engine.getPlayer().setImageByString("playerLeft");
+					Engine.getPlayer().moveLeft();
 					left = true;
 					break;
 					
 				case KeyEvent.VK_RIGHT:
-					engine.getPlayer().setImageByString("playerRight");
-					engine.getPlayer().moveRight();
+					Engine.getPlayer().setImageByString("playerRight");
+					Engine.getPlayer().moveRight();
 					right = true;
 					break;
 					
 				case KeyEvent.VK_UP:
-					engine.getPlayer().moveUp();
+					Engine.getPlayer().moveUp();
 					break;
 				
 				case KeyEvent.VK_DOWN:
-					engine.getPlayer().moveDown();
+					Engine.getPlayer().moveDown();
 					break;
 					
 				case KeyEvent.VK_SPACE:
 					space = true;
 					break;
-										
+				// ---------------- JUMP --------------
+				case KeyEvent.VK_SHIFT:
+					System.out.println("SAD BI TREBAO DA SKOCIS :(");
+					break;
+				// --------------- END OF JUMP --------
+					
+					
+				case KeyEvent.VK_TAB:
+					engine.killAllEnemies();
+					break;
 				default:
 					break;
 			}
 			
+			
+			/// FIRST TRY ------------------- >> MNOGO SPOR ODZIV, MORA TO BOLJE
 			if (space == true){
+				if (right == true){
+					Engine.getPlayer().fire("right");
+				}
 				if (left == true){
-					engine.getPlayer().fire("left");
-				}else{
-					engine.getPlayer().fire("right");
+					Engine.getPlayer().fire("left");
 				}
 			}
 			
-			refreshGUI();
-			/*	OVAJ DEO JE UBACEN U REFRESHGUI();
-			if (engine.isCollision()) 
-				refreshFooter();
 			
-			if (engine.isCollisionWithBullet()) 
-				refreshFooter();
-			*/
+			Engine.getPlayer().destroyBullets();
+			engine.keepPlayerWithinBorders(Engine.getPlayer()); // ------------------ KEEP PLAYER WITHIN BORDERS ------------
+			refreshGUI();
 		}
-		
 		
 		canvas.repaint();
 		return true;

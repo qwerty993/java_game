@@ -17,7 +17,6 @@ public abstract class Character {
 	private int numberOfLives;
 	private boolean collision;
 	private Point currentPosition;
-	
     public BufferedImage image;
 	
 	public Character(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {

@@ -1,6 +1,6 @@
 package Sound;
 
-import java.io.BufferedInputStream;
+import java.applet.Applet;
 import java.io.IOException;
 import java.net.URL;
 
@@ -18,52 +18,39 @@ public enum Sounds {
 	JINGLE_LOSE("Jingle_Lose.wav"),
 	SHOOT("Shoot.wav");
 	
-	private Clip sound, clip;
-	private String fileName;
-	
+	private Clip clip;
+	String fileName;
 	
 	Sounds(String fileName){
 		this.fileName = fileName;
-		/*
-		try {
-			sound = AudioSystem.getClip();
-			sound.open(AudioSystem.getAudioInputStream(getClass().getResource("/Resources/Sounds/" + this.fileName)));
-		} 
-		catch (UnsupportedAudioFileException e1) { }
-		catch (IOException e2) { } 
-		catch (LineUnavailableException e3) { }
-		*/
-	}
-	
-	/*
-    public void play() {
-    	//sound.setFramePosition(0);
-    	System.out.println(fileName + ": " + sound.getMicrosecondLength());
-    	sound.start();
-	}
-    */
-	
-	
-	public void play(){
 		
-		try {
-			
-			String path = System.getProperty("user.dir") + "/bin/Resources/Sounds/" + fileName;
-			System.out.println(path);
-			
-			BufferedInputStream bufStream = new BufferedInputStream(new URL(path).openStream());
-	        //AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(path).getAbsoluteFile());
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufStream);
-	        clip = AudioSystem.getClip();
-	        clip.open(audioInputStream);
-	        clip.start();
-	    } catch (UnsupportedAudioFileException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (LineUnavailableException e) {
-			e.printStackTrace();
-		}
+		//Applet.newAudioClip(this.getClass().getResource("/Resources/Sounds/" + fileName)).play();
+		
+		String path = System.getProperty("user.dir") + "/bin/Resources/Sounds/" + fileName;
+		System.out.println("path: " + path);			
+			try {
+				URL url = this.getClass().getResource("/Resources/Sounds/" + fileName);
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
+				clip = AudioSystem.getClip();
+				clip.open(audioInputStream);
+			} catch (UnsupportedAudioFileException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (LineUnavailableException e) {
+		         e.printStackTrace();
+			}
+					
 	}
 	
+	
+    public void play() {
+    	
+
+    	clip.setFramePosition(0);
+    	clip.start();
+	}
+    
 }
