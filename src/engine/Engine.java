@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import brick_ladder.Brick;
 import bullet.Bullet;
 import characters.Character;
 import characters.Enemy;
@@ -18,26 +19,36 @@ public class Engine {
 	private static final int PLAYER_START_X = 0;
 	private static final int PLAYER_START_Y = 500 - 68; //600 - 68 - 32; //68 = heightOfPlayer & 32 = height of footer	
 	
+	
+	// ovaj deo da uzimam iz brick klase
 	private static final int brickWidth = Character.IMG_WIDTH;
 	private static final int brickHeight = Character.IMG_HEIGHT;
 	
-	private Random r;
-	private static Player player;
-	private List<Enemy> enemies;
-	private boolean endOfGame;
-	private static int level;
-	private static List<Rectangle> levelObstacles;
+	private static Point move = null;	// za kretanje levo, desno, gore, dole
 	
+	private Player player;
+	private List<Enemy> enemies;
+	private List<Brick> levelObstacles;
 	private ArrayList<Thread> threads;
+	private Random r;
+	private boolean endOfGame;
+	private int level;
+	private Brick tmpBrick; 
 	
 	public Engine(int lvl){
 		r = new Random();
 		level = lvl;
-		levelObstacles = new ArrayList<Rectangle>(); 
+		
+		player = new Player(new Point(PLAYER_START_X, PLAYER_START_Y), 100, 4f, 3, false);
+		enemies = new ArrayList<Enemy>();
+		levelObstacles = new ArrayList<Brick>(); 
+		threads = new ArrayList<Thread>();
+		
 		init(level);
 	}
-		
-
+	
+	
+	
 	// CITOVANJE :D
 	
 	public void killAllEnemies(){
@@ -50,72 +61,11 @@ public class Engine {
 	
 	
 	
-
-	
-	class POKUSAJ_____JUMP {
-		//----------------------JUMP--------------------------------------------------------
-			Point velocity = new Point(10, 10);
-			Point gravity = new Point(0, 10);
-			double previousTime = 0;
-			double currentTime = getCurrentTime();
-			boolean onGround = true;
-					
-			public void jump(){
-				onGround = true;
-				while (onGround == true){
-					/*
-					previousTime = currentTime;
-					currentTime = getCurrentTime();
-					
-					System.out.println(previousTime - currentTime);
-					
-					double dt = currentTime - previousTime;
-					
-					if (dt > 0.15f){
-						dt = 0.15f;
-					}
-					*/
-					updateJump(0.03f);
-				}
-			}
-			
-			public void updateJump(double dt){
-				double x = player.getCurrentX() + velocity.getX() * dt;
-				double y = player.getCurrentY() + velocity.getY() * dt;
-				
-				if (player.getCurrentY() + (int)y >= 800){
-					onGround = true;
-				}
-				velocity.translate(gravity.x, gravity.y);
-				player.getCurrentPosition().setLocation(x, y);
-				
-				System.out.println("(x,y) = ( " + x + ", " + y + ")");
-				
-				keepPlayerWithinBorders(Direction.NOTHING);
-				System.out.println("izasao");
-				
-			}
-			
-			public double getCurrentTime(){
-				return System.currentTimeMillis();
-			}
-			
-			
-			
-			public boolean isOnGround() {
-				return onGround;
-			}
-			
-			//-----------------------END OF JUMP------------------------------------------
-	
-	}
-
-	
 	
 	
 	public void init(int level){
+		System.out.println("Inicijalizujem nivo: " + level);
 		if (level == 1){
-			endOfGame = false;
 			init1();
 		}else if (level == 2){
 			init2();
@@ -128,19 +78,33 @@ public class Engine {
 	
 	public void baseInitForObstacles(){
 		int k = Character.SCREEN_WIDTH / Character.IMG_WIDTH + 1;
+		levelObstacles.clear();
+		levelObstacles = Brick.matrixOfEmptyBricks();
 		
 		for (int i = 0; i < k; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500){
+					//brick.setIsBrick(true);
+					brick.setIsBrickAndIsLadder(true, false, true);
+				}
+			}
+			/*  FOR UMESTO OVOGA, valjda je brze jer manje opterecuje memoriju  
+			Rectangle tmpRectangle = new Rectangle(new Point(i*brickWidth, 500), new Dimension(brickWidth, brickHeight));
+			Brick tmpBrick = new Brick(tmpRectangle, true);
+			levelObstacles.add(tmpBrick);
+			*/
 		}
-		
 	}
 	
 	private void init1() {
-		player = new Player(new Point(PLAYER_START_X, PLAYER_START_Y), 100, 4f, 3, false);
+		player.setCurrentPosition(new Point(PLAYER_START_X, PLAYER_START_Y));
+		player.getFiredBullets().clear();
+		player.setHealth(100);
+		player.setNumberOfLives(3);
+		endOfGame = false;
+		level = 1;
 		
-		enemies = new ArrayList<Enemy>();
+		enemies.clear();
 		
 		enemies.add(new Enemy(new Point(300, 500-68))); // zeleni 
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 800);
@@ -148,43 +112,90 @@ public class Engine {
 		enemies.add(new Enemy(new Point(600, 500-68)));	// zeleni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 800);
 		
-		enemies.add(new Enemy2(new Point(416, 500 - 68*4))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(320, 512);
+		enemies.add(new Enemy2(new Point(448, 500 - 68*4))); // crveni
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(448-64, 576 - 64);
 		
 		enemies.add(new Enemy(new Point(128, 500 - 68*5))); 	// zeleni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(64, 192);
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(64 + 64, 192);
 		
-		enemies.add(new Enemy3(new Point(656, 500 - 68*7)));	// plavi
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(512, 750);
+		enemies.add(new Enemy3(new Point(670, 500 - 68*7)));	// plavi
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(512 + 20, 750);
 		
 		initObstaclesLevelOne();
 		
-		threads = new ArrayList<Thread>();
-	
 		startThreads();
 	}
 
 	public void initObstaclesLevelOne(){
-		levelObstacles.clear();
 		baseInitForObstacles();
 		
 		for (int i = 1; i < 4; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *4), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 4){
+					brick.setIsBrickAndIsLadder(true, false, true);  // horizontala
+
+					if (i == 1){
+						tmpBrick = null; 
+						for (int j = 1; j < 4; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+
+							if (j == 3){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							//System.out.println("INIT_11 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}	
+				}
+			}
 		}
 		
 		for (int i = 5; i < 9; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *3), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
+					brick.setIsBrickAndIsLadder(true, false, true); 
+					
+					if (i == 5){
+						tmpBrick = null; 
+						for (int j = 1; j < 3; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							
+							if (j == 2){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							//System.out.println("INIT_12 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}	
+				}
+			}
 		}
 		
 		for (int i = 8; i < 13; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *6), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+					brick.setIsBrickAndIsLadder(true, false, true);
+					
+					if (i == 8){
+						tmpBrick = null; 
+						for (int j = 4; j < 6; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							
+							if (j == 5){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							//System.out.println("INIT_13 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}	
+				}
+			}
 		}
+		
+		tmpBrick = null;
 	}
 	
 	private void init2() {
@@ -216,46 +227,110 @@ public class Engine {
 		
 		initObstaclesLevelTwo();
 		
-		threads.clear();
-		
 		startThreads();
-		
 	}
 	
 	private void initObstaclesLevelTwo() { 
 		levelObstacles.clear();
 		baseInitForObstacles();
-		
+				
 		for (int i = 0; i < 3; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *2), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 2){
+					brick.setIsBrickAndIsLadder(true, false, true);
+				}
+			}
 		}
 		
 		for (int i = 9; i < 12; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *3), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
+					brick.setIsBrickAndIsLadder(true, false, true);
+
+					if (i == 9){
+						tmpBrick = null; 
+						for (int j = 1; j < 3; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+
+							if (j == 2){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}
+				}
+			}
 		}
 		
-		for (int i = 3; i < 6; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *4), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+		for (int i = 3; i < 8; i++) {
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 4){
+					brick.setIsBrickAndIsLadder(true, false, true);
+				}
+			}
 		}
 		
-		for (int i = 0; i < 4; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *6), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+		for (int i = 0; i < 4; i++) {			
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+					brick.setIsBrickAndIsLadder(true, false, true);
+					
+					if (i == 3){
+						tmpBrick = null; 
+						for (int j = 5; j < 6; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							
+							if (j == 5){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}
+				}
+			}
 		}
 		
-		for (int i = 7; i < 11; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *6), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+		for (int i = 7; i < 11; i++) {			
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+					brick.setIsBrickAndIsLadder(true, false, true);
+					
+					if (i == 7){
+						tmpBrick = null; 
+						for (int j = 5; j < 6; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							
+							if (j == 5){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}
+					
+					if (i == 10){
+						tmpBrick = null; 
+						for (int j = 4; j < 6; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							
+							if (j == 5){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}	
+				}
+			}
 		}
 		
+		tmpBrick = null;
 	}
 
 	private void init3() {
@@ -296,48 +371,57 @@ public class Engine {
 		
 		initObstaclesLevelThree();
 		
-		threads.clear();
-		
 		startThreads();
 		
 	}
 		
-	private void initObstaclesLevelThree() {
+	private void initObstaclesLevelThree() { // dodati merdevine
 		levelObstacles.clear();
 		baseInitForObstacles();
 		
 		for (int i = 1; i < 12; i++) {
 			if (i < 4 || i > 7){
-				Rectangle tmpRectangle = null;
-				tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *2), new Dimension(brickWidth, brickHeight));
-				levelObstacles.add(tmpRectangle);
+				for (Brick brick : levelObstacles) {
+					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 2){
+						brick.setIsBrickAndIsLadder(true, false, true);
+					}
+				}
 			}
 		}
 		
 		for (int i = 0; i < 7; i++) {
 			if (i == 0 || i > 3){
-				Rectangle tmpRectangle = null;
-				tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *3), new Dimension(brickWidth, brickHeight));
-				levelObstacles.add(tmpRectangle);
+				for (Brick brick : levelObstacles) {
+					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
+						brick.setIsBrickAndIsLadder(true, false, true);
+					}
+				}
 			}
 		}
 		
 		for (int i = 1; i < 8; i++) {
-			Rectangle tmpRectangle = null;
-			tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *5), new Dimension(brickWidth, brickHeight));
-			levelObstacles.add(tmpRectangle);
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 5){
+					brick.setIsBrickAndIsLadder(true, false, true);
+				}
+			}
 		}
 		
 		for (int i = 1; i < 11; i++) {
 			if (i == 1 || i > 7){
-				Rectangle tmpRectangle = null;
-				tmpRectangle = new Rectangle(new Point(i*brickWidth, 500 - brickHeight *6), new Dimension(brickWidth, brickHeight));
-				levelObstacles.add(tmpRectangle);
+				for (Brick brick : levelObstacles) {
+					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+						brick.setIsBrickAndIsLadder(true, false, true);
+					}
+				}
 			}
 		}
+		
+		tmpBrick = null;
 	}
 
 	private void startThreads(){
+		threads.clear();
 		for (int i = 0; i < enemies.size(); i++) {
 		    Thread enemyThread = new Thread(enemies.get(i));
 		    threads.add(enemyThread);
@@ -368,6 +452,7 @@ public class Engine {
 	
 	public boolean isEnd(){
 		if (endOfGame == true){
+			level = 4;
 			return true;
 		}
 		return false;
@@ -491,7 +576,7 @@ public class Engine {
 			if (bullet != null){
 				Rectangle bulletRectangle = new Rectangle(new Point(bullet.getBulletPosition().getLocation()), new Dimension(Bullet.BULLET_WIDTH, Bullet.BULLET_HEIGHT));					
 				for (int i = 0; i < levelObstacles.size(); i++) {
-					if (levelObstacles.get(i) != null){
+					if (levelObstacles.get(i) != null && levelObstacles.get(i).isBrick() && !levelObstacles.get(i).isLadderIMG()){
 						Rectangle obstacleRectangle = new Rectangle(levelObstacles.get(i).getLocation(), new Dimension(brickWidth, brickHeight));
 						if (overlapsFromLeftOrRight(bulletRectangle, obstacleRectangle) != Direction.NOTHING){
 							//System.out.println("Metak udario u zid!");
@@ -523,92 +608,104 @@ public class Engine {
 				}
 			}
 		}
-		//System.out.println("moreToKill() = " + numberOfKills);
 		if (numberOfKills == enemies.size()) return false; 
 		return true; 
 	}
 
-	/// ------------------ KEEP PLAYER WITHIN BORDERS ------------
-	
-
 	public void keepPlayerWithinBorders(Direction direction) {
 		switch (direction) {
 		case LEFT:
-			overlapsFromLEFT();
+			player.setImageByString("playerLeft");
+			moveLeft();
 			break;
 		case RIGHT:
-			overlapsFromRIGHT();
+			player.setImageByString("playerRight");
+			moveRight();
 			break;
 		case UP:
-			overlapsFromUP();
+			moveUp();
 			break;
 		case DOWN:
-			overlapsFromDOWN();
+			moveDown();
 			break;
 		default:
 			break;
 		}
 	}
-		
-	private void overlapsFromLEFT() {
-		Rectangle playerRectangle = new Rectangle(player.getCurrentPosition(), new Dimension(Character.getImgWidth(), Character.getImgWidth()));
-		for (Rectangle obstacle : levelObstacles) {
-			if ((int) playerRectangle.getY() <= (int) obstacle.getY() + brickHeight) {
-				if (playerRectangle.intersects(obstacle)) {
-					if (obstacle.x - brickWidth >= 0) {
-						player.setCurrentPosition(new Point(obstacle.x + brickWidth, obstacle.y));
-						System.out.println("Direction.LEFT");
-						return;
+	
+	private void moveUp(){
+		move = player.getCurrentPosition();
+		for (Brick brick : levelObstacles) {			
+			if (brick.getX() == move.getX() && brick.getY() == move.getY()){
+				Brick tmpBrick = brick;
+				System.out.println("UP ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+					if (brick.isBrick() == true && brick.isLadderIMG() == true){
+						player.moveUp();
+						System.out.println("gore");
+					}else{
+						System.out.println("Neces gore!");
 					}
+					break;
+					
+				
+			} 
+		}
+	}
+	
+	private void moveDown(){
+		move = player.getCurrentPosition();
+		for (Brick brick : levelObstacles) {
+			if (brick.getX() == move.getX() && brick.getY()  == move.getY() + brickHeight){
+				Brick tmpBrick = brick;
+				System.out.println("DOWN ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				
+				if (brick.isBrick() == true && brick.isLadderIMG() == true){
+					player.moveDown();
+					System.out.println("dole");
+				}else{
+					System.out.println("Neces dole!");
 				}
+				break;
 			}
 		}
 	}
-		
-	private void overlapsFromRIGHT() {
-		Rectangle playerRectangle = new Rectangle(player.getCurrentPosition(), new Dimension(Character.getImgWidth(), Character.getImgWidth()));
-		for (Rectangle obstacle : levelObstacles) {
-			if ((int) playerRectangle.getY() + Player.getHeightOfPlayer() >= (int) obstacle.getY()) {
-				if (playerRectangle.intersects(obstacle)) {
-					if (obstacle.x + brickWidth <= 800 - brickWidth) {
-						player.setCurrentPosition(new Point(obstacle.x - brickWidth, obstacle.y));
-						System.out.println("Direction.RIGHT");
-						return;
-					}
+	
+	private void moveLeft() {
+		move = player.getCurrentPosition();
+		for (Brick brick : levelObstacles) {
+			if (brick.getX() >= move.getX() - brickWidth  && brick.getY() == move.getY() + brickHeight){
+				Brick tmpBrick = brick;
+				System.out.println("LEFT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				
+				if (brick.isBrick() == true && (brick.isBrickIMG() == true || brick.isLadderIMG() == true)){
+					player.moveLeft();
+					System.out.println("levo");
+				}else{
+					System.out.println("Nije cigla LEVO");
 				}
+				break;
 			}
 		}
 	}
-		
-	private void overlapsFromUP() {
-		Rectangle playerRectangle = new Rectangle(player.getCurrentPosition(), new Dimension(Character.getImgWidth(), Character.getImgWidth()));
-		for (Rectangle obstacle : levelObstacles) {
-			if ((int) playerRectangle.getY() + Player.getHeightOfPlayer() >= (int) obstacle.getY()) {
-				if (playerRectangle.intersects(obstacle)) {
-					player.setCurrentPosition(new Point(obstacle.x, obstacle.y + brickHeight));
-					System.out.println("Direction.UP");
-					return;
+	
+	private void moveRight() {
+		move = player.getCurrentPosition();
+		for (Brick brick : levelObstacles) {
+			if (brick.getX() >= move.getX() + brickWidth - Player.STEP && brick.getY() == move.getY() + brickHeight){
+				Brick tmpBrick = brick;
+				System.out.println("RIGHT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				
+				if (brick.isBrick() == true && (brick.isBrickIMG() == true || brick.isLadderIMG() == true)){
+					System.out.println("desno");
+					player.moveRight();
+				}else{
+					System.out.println("Nije cigla DESNO");
 				}
-			}
-		}
-	}	
-		
-	private void overlapsFromDOWN() {
-		Rectangle playerRectangle = new Rectangle(player.getCurrentPosition(),new Dimension(Character.getImgWidth(), Character.getImgWidth()));
-		
-		for (Rectangle obstacle : levelObstacles) {
-			if ((int) playerRectangle.getY() <= (int) obstacle.getY() + brickHeight) {
-				if (playerRectangle.intersects(obstacle)) {
-					if (obstacle.y + brickHeight <= 568) {
-						player.setCurrentPosition(new Point(obstacle.x, obstacle.y - brickHeight));
-						System.out.println("Direction.DOWN");
-						return;
-					}
-				}
+				break;
 			}
 		}
 	}
-			
+	
 	private Direction overlapsFromLeftOrRight(Rectangle bullet, Rectangle obstacle){ // obstacles && bullet
 		
 		if ((int)bullet.getX() + Character.IMG_WIDTH >= (int)obstacle.getX()){ 
@@ -626,11 +723,36 @@ public class Engine {
 		}
 		return Direction.NOTHING;
 	}
-			
-	/// ------------------ END OF KEEP PLAYER WITHIN BORDERS ------------
 	
 	
-	public static Player getPlayer() {
+	public void fireBullets(boolean space, boolean left, boolean right){
+		if (space == true){
+			if (right == true){
+				player.fire(Direction.RIGHT);
+			}
+			if (left == true){
+				player.fire(Direction.LEFT);
+			}
+		}
+		player.destroyBullets();
+	}
+	
+	public void removeAll(){
+		hidePlayer();
+		enemies.clear();
+		levelObstacles.clear();
+		player.getFiredBullets().clear();
+	}
+	
+	public void hidePlayer(){
+		player.hide();
+	}
+	
+	public void moveBullets(){
+		player.moveBullets();
+	}
+	
+	public Player getPlayer() {
 		return player;
 	}
 
@@ -638,13 +760,16 @@ public class Engine {
 		return enemies;
 	}
 
-	public static int getLevel() {
+	public int getLevel() {
 		return level;
 	}
 	
-	public static List<Rectangle> getLevelObstacles() {
-		return levelObstacles;
+	public void setLevel(int level){
+		this.level = level;
 	}
 	
+	public List<Brick> getLevelObstacles() {
+		return levelObstacles;
+	}
 	
 }

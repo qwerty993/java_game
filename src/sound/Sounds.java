@@ -1,13 +1,10 @@
 package sound;
 
-import java.io.IOException;
-import java.net.URL;
+import java.io.File;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 public enum Sounds {
 	COLLECT_POINT("Collect_Point.wav"),
@@ -23,34 +20,48 @@ public enum Sounds {
 	Sounds(String fileName){
 		this.fileName = fileName;
 		
-		//Applet.newAudioClip(this.getClass().getResource("/Resources/Sounds/" + fileName)).play();
-		
-		String path = System.getProperty("user.dir") + "/bin/Resources/Sounds/" + fileName;
-		System.out.println("path: " + path);
-		
+		//String path = System.getProperty("user.dir") + "/bin/Resources/Sounds/" + fileName;
+		//System.out.println("path: " + path);
+
+			/*
 			try {
-				URL url = this.getClass().getResource("/Resources/Sounds/" + fileName);
-				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
 				clip = AudioSystem.getClip();
+				File file = new File(path);
+				//AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(path).getAbsoluteFile());
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(Sounds.class.getResourceAsStream("/Resources/Sounds/" + fileName));
+				if (file.exists()) {
+					AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(file);
+					clip.open(audioInputStream);			    	
+				}
 				clip.open(audioInputStream);
-			} catch (UnsupportedAudioFileException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (LineUnavailableException e) {
-		         e.printStackTrace();
+			} catch (Exception ex) {
+				System.out.println("Greska prilikom pustanja zvuka.");
+				//ex.printStackTrace();
 			}
-					
+				*/	
 	}
 	
-	
-    public void play() {
-    	
 
-    	clip.setFramePosition(0);
-    	clip.start();
+    
+    public void playSound() {
+		try {
+			//Clip clip;
+			AudioInputStream audioInputStream = AudioSystem
+					.getAudioInputStream(new File(System.getProperty("user.dir") + "/bin/Resources/Sounds/Collect_Point.wav"));
+			clip = AudioSystem.getClip();
+			clip.open(audioInputStream);
+			clip.start();
+		} catch (Exception ex) {
+			System.out.println("Greska prilikom pustanja zvuka. --> " + fileName);
+			ex.printStackTrace();
+		}
 	}
     
+    /*
+    public void playSound() {
+    	clip.setFramePosition(0); // mora uvek da se premota
+    	clip.start();
+	}   
+    */
 }
+

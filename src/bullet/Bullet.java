@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import characters.Character;
+import engine.Direction;
 
 public class Bullet implements BulletInterface{
 	public BufferedImage bulletImage;
@@ -23,7 +24,6 @@ public class Bullet implements BulletInterface{
 		if (imageStr == null){
 			bulletImage = null;
 		}else{
-		
 			try {
 		    	String path = System.getProperty("user.dir") + "/bin/Resources/Images/" + imageStr + ".png";
 		    	File file = new File(path);
@@ -35,13 +35,13 @@ public class Bullet implements BulletInterface{
 	}
 
 	@Override
-	public void spawnBullet(String direction) {
-		if (direction == "right"){
+	public void spawnBullet(Direction direction) {
+		if (direction == Direction.RIGHT){
 			if (bulletPosition.getX() + BULLET_SPEED <= Character.SCREEN_WIDTH){
 				bulletPosition.setLocation((int)bulletPosition.getX() + BULLET_SPEED, (int)bulletPosition.getY());
 				left = false;
 			}
-		}else if (direction == "left"){
+		}else if (direction == Direction.LEFT){
 			if (bulletPosition.getX() - BULLET_SPEED >= 0){
 				bulletPosition.setLocation((int)bulletPosition.getX() - BULLET_SPEED - BULLET_WIDTH - Character.IMG_WIDTH + 10, (int)bulletPosition.getY());
 				left = true;

@@ -1,8 +1,10 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Event;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -24,30 +26,28 @@ import engine.Engine;
 
 public class GUI extends JFrame implements KeyEventDispatcher {
 	private static final long serialVersionUID = 1L;
-
-	private static final int WIDTH = 800; // SVGA resolution 800x600
+	private static final int WIDTH = 800;		// SVGA resolution 800x600
 	private static final int HEIGHT = 600;
 	
-	// Uzimam dimenzije ekrana da bih pozicionirao prozor na centar ekrana.
-	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-	private double widthScr = screenSize.getWidth();
-	private double heightScr = screenSize.getHeight();
+	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();		// DIMENZIJE EKRANA (MONITORA)
+	private final double widthScr = screenSize.getWidth();
+	private final double heightScr = screenSize.getHeight();
 
-	// FOOTER PART
-	private JPanel footer;
+	private JPanel footer;			// FOOTER 
 	private JLabel lblHealth;
 	private JLabel lblLives;	
 	private JLabel lblCurrentLevel;
+	private Font fontSize20;
+	private Font fontSize18;
 	
-	// KEYPRESSED COMBINATON LOGIC
-	private boolean space = false;
+	private boolean space = false;	// KEYPRESSED COMBINATON LOGIC
 	private boolean left = false;
 	private boolean right = false;
 
 	private Timer timer;
 	private Canvas canvas;
 	private Engine engine;
-	
+
 	public GUI() {
 		setTitle("Kill them all!");
 		
@@ -55,13 +55,12 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		manager.addKeyEventDispatcher(this);
 
 		engine = new Engine(1); 
-		
-		canvas = new Canvas(Engine.getPlayer(), engine.getEnemies());
+		canvas = new Canvas(engine);
 		
 		timer = new Timer(20, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-		        Engine.getPlayer().moveBullets();
+		        engine.moveBullets();
 		        engine.bulletOverlapsWithObstacle();
 		        refreshGUI();
 				canvas.repaint();
@@ -71,32 +70,39 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		timer.start();
 
 		getContentPane().add(canvas);
-		
 		setFooter();
+		
 		pack();
 		setVisible(true);
+		setFocusable(true);
 		setResizable(false);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-
 		setLocationRelativeTo(null);
-		
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		setLocation(new Point((int) ((widthScr - WIDTH) / 2), (int) ((heightScr - HEIGHT) / 2)));
 	}
 
 	public void setFooter() {
+		fontSize18 = new  Font("Comic Sans MS", Font.BOLD, 18);
+		fontSize20 = new Font("Comic Sans MS", Font.BOLD, 20);
+		
 		footer = new JPanel(new GridLayout(1, 3, 4, 4));
+		
 		footer.setPreferredSize(new Dimension(WIDTH, 32));
+		footer.setBackground(new Color(51, 153, 255));
 		
 		lblHealth = new JLabel("HEALTH: 100%", SwingConstants.CENTER);
-		lblLives = new JLabel("LIVES: 3", SwingConstants.CENTER); 
-		lblCurrentLevel = new JLabel("LEVEL: 1", SwingConstants.CENTER);
+		lblHealth.setForeground(Color.WHITE);
+		lblHealth.setFont(fontSize20);
 		
-		/* 	
-		  	Dodam u konstruktor SwingConstants.CENTER i onda nema potrebe za podesavanjem  
-		 	lblLives.setVerticalAlignment(SwingConstants.CENTER);
-			lblLives.setHorizontalAlignment(SwingConstants.CENTER);
-		*/
+		
+		lblLives = new JLabel("LIVES: 3", SwingConstants.CENTER); 
+		lblLives.setForeground(Color.WHITE);
+		lblLives.setFont(fontSize20);
+		
+		lblCurrentLevel = new JLabel("LEVEL: 1", SwingConstants.CENTER);
+		lblCurrentLevel.setForeground(Color.WHITE);
+		lblCurrentLevel.setFont(fontSize20);
 		
 		footer.add(lblHealth);
 		footer.add(lblLives);
@@ -106,31 +112,37 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	}
 
 	private void refreshFooter(){
-		lblHealth.setText("HEALTH: " + Engine.getPlayer().getHealth() + "%");
-		lblLives.setText("LIVES: " + Engine.getPlayer().getNumberOfLives());
-		lblCurrentLevel.setText("LEVEL: " + Engine.getLevel());
+		if (engine.isCollision()){
+			lblHealth.setForeground(Color.RED);
+			lblHealth.setFont(fontSize18);
+		}else{
+			lblHealth.setForeground(Color.WHITE);
+			lblHealth.setFont(fontSize20);
+		}
+		lblHealth.setText("HEALTH: " + engine.getPlayer().getHealth() + "%");
+		lblLives.setText("LIVES: " + engine.getPlayer().getNumberOfLives());
+		lblCurrentLevel.setText("LEVEL: " + engine.getLevel());
 	}
 	
 	public void refreshGUI(){	
 		if (engine.isEnd()){
-			canvas.readBackgroundImage(0);
+			engine.removeAll();
 			canvas.repaint();
 			dialogBoxHandler("Thank you for playing!\nNew game?");
 		}
 		
 		if (engine.isNextLevel()){
-			int level = Engine.getLevel();
-			engine.init(level);
-			canvas.readBackgroundImage(level);
-			System.out.println("Next level activated!");
-			refreshFooter();	// dodao refreshFooter() jer je mnogo kasnio sa promenom LVL-a 
+			engine.init(engine.getLevel());
+			System.out.println("Next level activated! " + engine.getLevel());
+			refreshFooter();
 			canvas.repaint();
 		}
 		
 		if (engine.isWin()){
-			canvas.readBackgroundImage(0);
+			engine.removeAll();
 			canvas.repaint();
 			dialogBoxHandler("Congratulations!\nYou win!\nNew game?");
+			refreshFooter();
 		}
 		
 		if (engine.isCollision()) 
@@ -138,30 +150,34 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		
 		if (engine.isCollisionWithBullet()) 
 			refreshFooter();
+		
 	}
 	
-	private synchronized void dialogBoxHandler(String message){
-		int response = JOptionPane.showConfirmDialog(this, message, "Game over!", JOptionPane.YES_NO_OPTION);
+	private void dialogBoxHandler(String message){
 		timer.stop();
+		int response = JOptionPane.showConfirmDialog(this, message, "Game over!", JOptionPane.YES_NO_OPTION);
 		
-		//engine.stopThreads();
-		
-		//engine.killAllThreads();
-		
-		// stopiraj sve tredove
-		// engine.stopThreads();
-		// MNOGO PUTA SE POJAVI DIALOG BOX, TO NE SME DA SE DESAVA, PROVERITI U ENGINU STOP_THREADS() !!!!
 		
 		if (response == JOptionPane.YES_OPTION){
 			System.out.println("ovde puca");
-			engine.init(1);
-			timer.start();
-			canvas.removeAll();
-			canvas.revalidate();
-			canvas.repaint();
+			
+			
+			engine.setLevel(1);
+			engine.init(engine.getLevel());
+			
+			if (engine.getLevel() != 1) engine.removeAll();
+			
+			refreshFooter();
+			
+			/* ima u timer.start();
+			canvas.repaint(); 
 			refreshGUI();
+			*/
+			
+			timer.start();
 		}else{
-			engine.stopThreads();
+			//engine.stopThreads();
+			dispose();
 			System.exit(0);
 		}
 	}
@@ -177,7 +193,7 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 			
 			if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT){
 				// kad se puste strlice levo i desno onda se postavi player front image
-				Engine.getPlayer().setImageByString("player");
+				engine.getPlayer().setImageByString("player");
 				
 				if (e.getKeyCode() == KeyEvent.VK_LEFT){
 					left = false;
@@ -191,60 +207,37 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 			switch (e.getKeyCode()) {
 			
 				case KeyEvent.VK_LEFT:
-					Engine.getPlayer().setImageByString("playerLeft");
-					Engine.getPlayer().moveLeft();
 					engine.keepPlayerWithinBorders(Direction.LEFT);
 					left = true;
 					break;
 					
 				case KeyEvent.VK_RIGHT:
-					Engine.getPlayer().setImageByString("playerRight");
-					Engine.getPlayer().moveRight();
 					engine.keepPlayerWithinBorders(Direction.RIGHT);
 					right = true;
 					break;
 					
 				case KeyEvent.VK_UP:
-					Engine.getPlayer().moveUp();
 					engine.keepPlayerWithinBorders(Direction.UP);
 					break;
 				
 				case KeyEvent.VK_DOWN:
-					Engine.getPlayer().moveDown();
 					engine.keepPlayerWithinBorders(Direction.DOWN);
 					break;
 					
 				case KeyEvent.VK_SPACE:
 					space = true;
 					break;
-				// ---------------- JUMP --------------
-				case KeyEvent.VK_SHIFT:
-					System.out.println("SAD BI TREBAO DA SKOCIS :(");
-					break;
-				// --------------- END OF JUMP --------
-					
 					
 				case KeyEvent.VK_TAB:
-					engine.killAllEnemies();
+					engine.killAllEnemies();	// za brzi prelazak nivo-a
 					break;
+					
 				default:
 					break;
 			}
 			
-			
-			/// FIRST TRY ------------------- >> MNOGO SPOR ODZIV, MORA TO BOLJE
-			if (space == true){
-				if (right == true){
-					Engine.getPlayer().fire("right");
-				}
-				if (left == true){
-					Engine.getPlayer().fire("left");
-				}
-			}
-			
-			
-			Engine.getPlayer().destroyBullets();
-			//engine.keepPlayerWithinBorders(Engine.getPlayer()); // ------------------ KEEP PLAYER WITHIN BORDERS ------------
+						
+			engine.fireBullets(space, left, right);
 			refreshGUI();
 		}
 		

@@ -56,9 +56,8 @@ public class Enemy extends Character implements Runnable{
     	widthOfEnemy = Character.IMG_WIDTH;
     	
     	
-    	//OBRISI POSLE
+    	//DEBUG
     	rbrEnemija = ++brojEnemija;
-    	// ---------------------------------
 	}
 
 	@Override
@@ -152,6 +151,14 @@ public class Enemy extends Character implements Runnable{
 		borderRight = rightX;
 	}
 	
+	public int getBorderLeft() {
+		return borderLeft;
+	}
+
+	public int getBorderRight() {
+		return borderRight;
+	}
+
 	
 	@Override
 	public void moveLeft() {

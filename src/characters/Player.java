@@ -9,83 +9,82 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
+import engine.Direction;
 import bullet.Bullet;
 
 
 public class Player extends Character{
-	public static final int STEP = 64/2; // BIO 10
-	public static final int JUMP = 68; // bio : STEP * 5;
+	public static final int STEP = 64/2; 
+	public static final int JUMP = 68;
 	
-	private static int widthOfPlayer;
-	private static int heightOfPlayer;
+	private static Point move;	// za kretanje: Left, Right, Up, Down
+	private static int x;		
+	private static int y;		
+	private static Point moveBullet;	// za kretanje bullet-a
+	private static int xBullet;
+	private static int yBullet;
 	
-	private BufferedImage frontImg, leftImg, rightImg; // MOZE DA BUDE STATIC A I NE MORA, POSTO SE SAMO JEDNOM INSTANCIRA PLAYER
-	
-	private List<Bullet> firedBullets = new ArrayList<Bullet>();
+	private BufferedImage frontImg, leftImg, rightImg;
+	private List<Bullet> firedBullets;
 	
 	public Player(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {
 		super(startPosition, health, speed, numberOfLives, collision);
-		
 		frontImg = setImage("player");
 		leftImg = setImage("playerLeft");
 		rightImg = setImage("playerRight");
 		super.image = frontImg;
-		
-		heightOfPlayer = Character.IMG_HEIGHT;
-    	widthOfPlayer = Character.IMG_WIDTH;
+		firedBullets = new ArrayList<Bullet>();
 	}	
 		
 	
 	@Override
 	public void moveLeft() {
-		Point moveLeft = new Point(super.getCurrentPosition());
-		int x = (int)moveLeft.getX();
-		int y = (int)moveLeft.getY();
+		move = super.getCurrentPosition();
+		x = (int)move.getX();
+		y = (int)move.getY();
 		
 		if (x - STEP >= 0){
-			moveLeft.setLocation(x - STEP , y);
+			move.setLocation(x - STEP , y);
 		}
-		
-		super.setCurrentPosition(moveLeft);
+		super.setCurrentPosition(move);
 	}
 
 	@Override
 	public void moveRight() {		
-		Point moveRight = new Point(super.getCurrentPosition());
-		int x = (int)moveRight.getX();
-		int y = (int)moveRight.getY();
+		move = super.getCurrentPosition();
+		x = (int)move.getX();
+		y = (int)move.getY();
 		
-		if (x + STEP + widthOfPlayer<= getWidth()){   // TREBA X + STEP + SIRINA_SLIKE <= GETWIDTH()
-			moveRight.setLocation(x + STEP , y);
+		if (x + STEP + Player.IMG_WIDTH <= getWidth()){   
+			move.setLocation(x + STEP , y);
 		}
 		
-		super.setCurrentPosition(moveRight);
+		super.setCurrentPosition(move);
 
 	}
-
+	
 	public void moveUp() {
-		Point moveUp = new Point(super.getCurrentPosition());
-		int x = (int)moveUp.getX();
-		int y = (int)moveUp.getY();
+		move = super.getCurrentPosition();
+		x = (int)move.getX();
+		y = (int)move.getY();
 		
 		if (y - JUMP >= 0){  
-			moveUp.setLocation(x , y - JUMP);
+			move.setLocation(x , y - JUMP);
 		}
 		
-		super.setCurrentPosition(moveUp);
+		super.setCurrentPosition(move);
 	}
 	
 	public void moveDown() {
-		Point moveDown = new Point(super.getCurrentPosition());
-		int x = (int)moveDown.getX();
-		int y = (int)moveDown.getY();
+		move = super.getCurrentPosition();
+		x = (int)move.getX();
+		y = (int)move.getY();
 		
 		if (y + JUMP + getHeightOfPlayer() <= getHeigt() - 32){  
-			//System.out.println(y + JUMP + getHeightOfPlayer()); // treba da ide do 568
-			moveDown.setLocation(x , y + JUMP);
+			move.setLocation(x , y + JUMP);
 		}
 		
-		super.setCurrentPosition(moveDown);
+		super.setCurrentPosition(move);
 	}
 		
 	@Override
@@ -115,7 +114,7 @@ public class Player extends Character{
 		}
 	}
 	
-	public void fire(String direction){
+	public void fire(Direction direction){
 		Bullet bullet = new Bullet(this.getCurrentPosition());
 		firedBullets.add(bullet);
 	    bullet.spawnBullet(direction);
@@ -134,39 +133,35 @@ public class Player extends Character{
 			}
 		}
 	}
-	
-	public void moveBullets(){
-		Point move;
-		int x;
-		int y;
 		
+	public void moveBullets(){		
 		for (Bullet bullet : firedBullets) {
-			
 			if (bullet != null){
-				
-				move = new Point(bullet.getBulletPosition());
-				x = (int)move.getX();
-				y = (int)move.getY();
+				moveBullet = new Point(bullet.getBulletPosition());
+				xBullet = (int)moveBullet.getX();
+				yBullet = (int)moveBullet.getY();
 				
 				if (bullet.isLeft() == true){ // kad metkovi idu u levo
-					
-					if (x - Bullet.BULLET_SPEED >= 0 - Bullet.BULLET_WIDTH ){
-						move.setLocation(x - Bullet.BULLET_SPEED , y);
+					if (xBullet - Bullet.BULLET_SPEED >= 0 - Bullet.BULLET_WIDTH ){
+						moveBullet.setLocation(xBullet - Bullet.BULLET_SPEED , yBullet);
 					}else{
 						bullet = null;
 					}
 				}else{	// kad metkovi idu u desno
-					
-					if (x + Bullet.BULLET_SPEED - Bullet.BULLET_WIDTH <= getWidth()){  
-						move.setLocation(x + Bullet.BULLET_SPEED, y);
+					if (xBullet + Bullet.BULLET_SPEED - Bullet.BULLET_WIDTH <= getWidth()){  
+						moveBullet.setLocation(xBullet + Bullet.BULLET_SPEED, yBullet);
 					}else{
 						bullet = null;
 					}
 				}
 				
-				if (bullet != null) bullet.getBulletPosition().setLocation(move);
+				if (bullet != null) bullet.getBulletPosition().setLocation(moveBullet);
 			}
 		}
+	}
+	
+	public void hide(){
+		setCurrentPosition(new Point(1000, 1000));
 	}
 	
 	public List<Bullet> getFiredBullets() {
@@ -174,11 +169,11 @@ public class Player extends Character{
 	}
 	
 	public static int getWidthOfPlayer() {
-		return widthOfPlayer;
+		return Player.IMG_WIDTH;
 	}
 
 	public static int getHeightOfPlayer() {
-		return heightOfPlayer;
+		return Player.IMG_HEIGHT;
 	}
 	
 }
