@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import brick_ladder.Brick;
 import bullet.Bullet;
@@ -19,24 +18,20 @@ public class Engine {
 	private static final int PLAYER_START_X = 0;
 	private static final int PLAYER_START_Y = 500 - 68; //600 - 68 - 32; //68 = heightOfPlayer & 32 = height of footer	
 	
+	private static final int brickWidth = Brick.BRICK_WIDTH;
+	private static final int brickHeight = Brick.BRICK_HEIGHT;
 	
-	// ovaj deo da uzimam iz brick klase
-	private static final int brickWidth = Character.IMG_WIDTH;
-	private static final int brickHeight = Character.IMG_HEIGHT;
-	
-	private static Point move = null;	// za kretanje levo, desno, gore, dole
+	private static Point move = null;	// promenljiva za kretanje player-a levo, desno, gore, dole
 	
 	private Player player;
 	private List<Enemy> enemies;
 	private List<Brick> levelObstacles;
 	private ArrayList<Thread> threads;
-	private Random r;
 	private boolean endOfGame;
 	private int level;
-	private Brick tmpBrick; 
+	private Brick tmpBrick;		// promenljiva koja sluzi da ne bih non stop instancirao nove Brick nego koristim jednu uvek
 	
 	public Engine(int lvl){
-		r = new Random();
 		level = lvl;
 		
 		player = new Player(new Point(PLAYER_START_X, PLAYER_START_Y), 100, 4f, 3, false);
@@ -48,23 +43,9 @@ public class Engine {
 	}
 	
 	
-	
-	// CITOVANJE :D
-	
-	public void killAllEnemies(){
-		enemies.clear();
-	}
-	
-	public void killAllThreads(){
-		threads.clear();
-	}
-	
-	
-	
-	
-	
 	public void init(int level){
-		System.out.println("Inicijalizujem nivo: " + level);
+		// DEBUG
+		//System.out.println("Inicijalizujem nivo: " + level);
 		if (level == 1){
 			init1();
 		}else if (level == 2){
@@ -72,31 +53,33 @@ public class Engine {
 		}else if (level == 3){
 			init3();
 		}else{
-			System.out.println("END OF GAME");
+			// DEBUG
+			//System.out.println("END OF GAME");
 		}
 	}
 	
 	public void baseInitForObstacles(){
+	/*
+		Metoda koja sluzi da postavi zajednicke blokove (cigle) za sve nivoe
+	*/
+		
 		int k = Character.SCREEN_WIDTH / Character.IMG_WIDTH + 1;
 		levelObstacles.clear();
-		levelObstacles = Brick.matrixOfEmptyBricks();
+		levelObstacles = Brick.listOfEmptyBricks();
 		
 		for (int i = 0; i < k; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500){
-					//brick.setIsBrick(true);
 					brick.setIsBrickAndIsLadder(true, false, true);
 				}
 			}
-			/*  FOR UMESTO OVOGA, valjda je brze jer manje opterecuje memoriju  
-			Rectangle tmpRectangle = new Rectangle(new Point(i*brickWidth, 500), new Dimension(brickWidth, brickHeight));
-			Brick tmpBrick = new Brick(tmpRectangle, true);
-			levelObstacles.add(tmpBrick);
-			*/
 		}
 	}
 	
 	private void init1() {
+		
+		/* Osnovna podesavanja za player-a, karakreristicna za prvi level */
+
 		player.setCurrentPosition(new Point(PLAYER_START_X, PLAYER_START_Y));
 		player.getFiredBullets().clear();
 		player.setHealth(100);
@@ -106,6 +89,8 @@ public class Engine {
 		
 		enemies.clear();
 		
+		/* Postavljam enemies na svoje pozicije */
+		
 		enemies.add(new Enemy(new Point(300, 500-68))); // zeleni 
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 800);
 		
@@ -113,10 +98,10 @@ public class Engine {
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 800);
 		
 		enemies.add(new Enemy2(new Point(448, 500 - 68*4))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(448-64, 576 - 64);
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(448-64, 576);
 		
 		enemies.add(new Enemy(new Point(128, 500 - 68*5))); 	// zeleni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(64 + 64, 192);
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(64 + 64, 192 + 64);
 		
 		enemies.add(new Enemy3(new Point(670, 500 - 68*7)));	// plavi
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(512 + 20, 750);
@@ -129,21 +114,24 @@ public class Engine {
 	public void initObstaclesLevelOne(){
 		baseInitForObstacles();
 		
+		/* Metoda koja inicijalizuje blokove (cigle, merdevine, cigle + merdevine) karakteristicne za trenutni nivo */
+		
 		for (int i = 1; i < 4; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 4){
-					brick.setIsBrickAndIsLadder(true, false, true);  // horizontala
+					brick.setIsBrickAndIsLadder(true, false, true);  // horizontala --> CIGLE
 
 					if (i == 1){
 						tmpBrick = null; 
 						for (int j = 1; j < 4; j++) {
 							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
-							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala --> MERDEVINE
 
 							if (j == 3){
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
-								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala --> CIGLA + MERDEVINE
 							}
+							// DEBUG
 							//System.out.println("INIT_11 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}	
@@ -154,18 +142,19 @@ public class Engine {
 		for (int i = 5; i < 9; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
-					brick.setIsBrickAndIsLadder(true, false, true); 
+					brick.setIsBrickAndIsLadder(true, false, true); // horizontala --> CIGLE
 					
 					if (i == 5){
 						tmpBrick = null; 
 						for (int j = 1; j < 3; j++) {
 							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
-							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala --> MERDEVINE
 							
 							if (j == 2){
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
-								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala --> CIGLA + MERDEVINE
 							}
+							// DEBUG
 							//System.out.println("INIT_12 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}	
@@ -176,18 +165,19 @@ public class Engine {
 		for (int i = 8; i < 13; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
-					brick.setIsBrickAndIsLadder(true, false, true);
+					brick.setIsBrickAndIsLadder(true, false, true);	// horizontala --> CIGLE
 					
 					if (i == 8){
 						tmpBrick = null; 
 						for (int j = 4; j < 6; j++) {
 							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
-							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala --> MERDEVINE
 							
 							if (j == 5){
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
-								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala --> CIGLA + MERDEVINE
 							}
+							// DEBUG
 							//System.out.println("INIT_13 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}	
@@ -207,22 +197,22 @@ public class Engine {
 		enemies.add(new Enemy2(new Point(450, 500-68))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 600);
 		
-		enemies.add(new Enemy3(new Point(700, 500-68))); // plavi
+		enemies.add(new Enemy3(new Point(680, 500-68))); // plavi
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(50, 750);
 		
-		enemies.add(new Enemy2(new Point(0, 500 - 68*3))); // crveni
+		enemies.add(new Enemy2(new Point(2, 500 - 68*3))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 192);
 		
 		enemies.add(new Enemy2(new Point(620, 500 - 68*4))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(576, 704);
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(576, 704 + 64);
 		
-		enemies.add(new Enemy(new Point(192, 500 - 68*5))); // zeleni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(192, 320);
+		enemies.add(new Enemy(new Point(194, 500 - 68*5))); // zeleni
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(192, 320+64);
 		
 		enemies.add(new Enemy3(new Point(45, 500 - 68*7))); // plavi
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 192);
 		
-		enemies.add(new Enemy2(new Point(448, 500 - 68*7))); // crveni
+		enemies.add(new Enemy2(new Point(450, 500 - 68*7))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(448, 640);
 		
 		initObstaclesLevelTwo();
@@ -257,7 +247,8 @@ public class Engine {
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
 								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
 							}
-							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							// DEBUG
+							//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}
 				}
@@ -287,7 +278,8 @@ public class Engine {
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
 								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
 							}
-							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							// DEBUG
+							//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}
 				}
@@ -309,7 +301,8 @@ public class Engine {
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
 								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
 							}
-							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							// DEBUG
+							//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}
 					
@@ -323,7 +316,8 @@ public class Engine {
 								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
 								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
 							}
-							System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							// DEBUG
+							//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 						}	
 					}	
 				}
@@ -420,29 +414,14 @@ public class Engine {
 		tmpBrick = null;
 	}
 
-	private void startThreads(){
+	public void startThreads(){
+		/* Metoda koja startuje enemies */
 		threads.clear();
 		for (int i = 0; i < enemies.size(); i++) {
 		    Thread enemyThread = new Thread(enemies.get(i));
 		    threads.add(enemyThread);
 		    enemyThread.start();
 		 }
-	}
-	
-	public void stopThreads(){ 	/// PROVERITI DA LI RADI
-		
-		//ExecutorService service = Executors.newCachedThreadPool();
-		//Future future;
-
-		for (Thread thread : threads) {
-			if (thread.isAlive()){
-				Thread.currentThread().interrupt();
-				thread.interrupt();
-			//	future = service.submit(thread);
-			//	future.cancel(true);
-			}
-		}
-		//service.shutdown();
 	}
 	
 	public boolean isWin(){
@@ -463,7 +442,8 @@ public class Engine {
 		else{
 			level++;
 			if (isWin() == true){
-				System.out.println("Pobedio si!");
+				// DEBUG
+				//System.out.println("Pobedio si!");
 				return false;
 			}
 			return true;
@@ -471,10 +451,17 @@ public class Engine {
 	}
 	
 	public boolean overlaps(Rectangle player, Rectangle enemy){
+		/* Metoda koja proverava da li se dva pravougaonika preklapaju */
 		return player.getX() < enemy.getX() + enemy.getWidth() && player.getX() + player.getWidth() > enemy.getX() && player.getY() < enemy.getY() + enemy.getHeight() && player.getY() + player.getHeight() > enemy.getY();  
 	}
 	
-	public boolean isCollisionWithBullet(){ // KOLIZIJA IZMEDJU ENEMY-ja i BULLET-a 
+	public boolean isCollisionWithBullet(){ 
+	/*	
+		Metoda koja proverava da li je doslo do kolizije izmedju nekog bullet-a i nekog od enemy-ja i
+		ako je doslo do kolizije, skidaju se health-i pogodjenom enemy-ju, a metak kojim je enemy
+		pogodjen se unistava 
+	*/
+		
 		Rectangle bulletRectangle;
 		Rectangle enemyRectangle;
 		List<Bullet> firedBullets = player.getFiredBullets();
@@ -494,7 +481,9 @@ public class Engine {
 					bullet = firedBullets.get(j);
 					
 					if (bullet != null){	
+												
 						bulletRectangle = new Rectangle(new Point(bullet.getBulletPosition()), new Dimension(Bullet.BULLET_WIDTH, Bullet.BULLET_HEIGHT));
+						
 						if (overlaps(bulletRectangle, enemyRectangle) == true){
 							//Sounds.HIT.play();
 							
@@ -502,19 +491,13 @@ public class Engine {
 							bullet.setBulletImage(null);
 							enemy.collisonWithBullet(true);
 													
-							// Metak svako unistavam ako je plejer pogodjen
-							bullet = null;
+							bullet = null;	// Metak svako unistavam ako je player pogodjen
 							firedBullets.set(j, null);
 							
-							// OVAJ DEO UNISTI BULLET I ENEMYA (metkovi nisu mogli da predju mesto gde je nekada
-							// bio enemy. sa ovim delom sam to resio.. sad metkovi dodju do kraja prozora)
 							if (enemy.isEnemyKilled() == true){
-								
 								enemy = null;
 								enemies.set(i, null);
-								
-								// dodat naknadno, jer su izlazile greske!
-								return isCollisionWithBullet();
+								isCollisionWithBullet();
 							}
 						}
 					}
@@ -525,7 +508,11 @@ public class Engine {
 		return false;
 	}
 	
-	public boolean isCollision(){	// KOLIZIJA IZMEDJU PLAYER-A I ENEMY-JA 
+	public boolean isCollision(){
+	/*	
+		Metoda koja proverava da li je doslo do kolizije izmedju Player-a i nekog od enemy-ja i
+		ako je doslo do kolizije, skidaju se health-i i enemy-ju i player-u
+	*/
 		Rectangle rectanglePlayer = new Rectangle(player.getCurrentX(), player.getCurrentY(), Player.getWidthOfPlayer(), Player.getHeightOfPlayer());
 		Rectangle enemyRectangle;
 		boolean collisionHappend = false;
@@ -537,30 +524,14 @@ public class Engine {
 				if (overlaps(rectanglePlayer, enemyRectangle) == true){
 					collisionHappend = true;
 					
-					tmpEnemy.collisonWithPlayer(collisionHappend);  // skida enemy-ju helth
+					tmpEnemy.collisonWithPlayer(collisionHappend);  // Skida enemy-ju health
 					
 					if (tmpEnemy.isEnemyKilled() == true){
 				
-						enemies.set(i, null);   // setujem ubijenog enemy-ja na null
-						threads.get(i).interrupt();
-						System.out.println("enemies.set(i,null); --> " + enemies.get(i));
-						System.out.println("threads.get(i).interrupt(); --> " + threads.get(i).isInterrupted());
+						enemies.set(i, null);   // Setujem ubijenog enemy-ja na null
 					}
 					
-					// preklapaju se enemy i player, player-u se smanjuje health 20%;
-					player.setHealth(player.getHealth() - (int)(player.getHealth() * 0.2) - 1);
-					
-					if (player.getHealth() <= 0){
-						int numOfLives = player.getNumberOfLives();
-						System.out.println("Ostalo zivota: " + numOfLives);
-						if ( numOfLives > 0){
-							player.setHealth(100); // ponovo ima 100% health-a
-							--numOfLives;
-							player.setNumberOfLives(numOfLives); // smanjio mu se jedan zivot
-						}else{
-							endOfGame = true;
-						}
-					}
+					endOfGame = player.collisionWithEnemy(collisionHappend);	// skida player-u health
 				}
 			}
 		}	
@@ -569,6 +540,11 @@ public class Engine {
 	}
 	
 	public void bulletOverlapsWithObstacle(){
+	/* 
+	 	Metoda koja proverava da li je metak udario u neku prepreku
+	 	ako je prepreka cigla, onda se metak unistava
+	 	ako je prepreka merdevina, onda metak nastavlja da se krece
+	*/
 		List<Bullet> firedBullets = player.getFiredBullets();
 
 		for (int j = 0; j < firedBullets.size(); j++) {
@@ -579,6 +555,7 @@ public class Engine {
 					if (levelObstacles.get(i) != null && levelObstacles.get(i).isBrick() && !levelObstacles.get(i).isLadderIMG()){
 						Rectangle obstacleRectangle = new Rectangle(levelObstacles.get(i).getLocation(), new Dimension(brickWidth, brickHeight));
 						if (overlapsFromLeftOrRight(bulletRectangle, obstacleRectangle) != Direction.NOTHING){
+							// DEBUG
 							//System.out.println("Metak udario u zid!");
 							player.destroyBulletWhenHitObstacle(j);
 						}
@@ -590,22 +567,15 @@ public class Engine {
 	}
 	
 	public boolean moreToKill(){
+	/*
+	  	Metoda koja proverava koliko enemy-ja je ostalo, ako je numberOfKills == 0, 
+	  	metoda vraca true i onda moze da se aktivira sledeci level
+	*/
 		int numberOfKills = 0;
 		
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies.get(i) == null){
 				numberOfKills++;
-			}else{
-				Enemy tmpEnemy = enemies.get(i);
-				
-				if (r.nextInt(2) == 1){ // idi desno ako moze
-					if (tmpEnemy.getCurrentX() + Enemy.SPEED <= Enemy.SCREEN_WIDTH)
-						tmpEnemy.getCurrentPosition().setLocation(tmpEnemy.getCurrentX() + Enemy.SPEED, tmpEnemy.getCurrentY());
-				}else{	// idi levo ako moze
-					if (tmpEnemy.getCurrentX() - Enemy.SPEED >= 0){
-						tmpEnemy.getCurrentPosition().setLocation(tmpEnemy.getCurrentX() - Enemy.SPEED, tmpEnemy.getCurrentY());
-					}
-				}
 			}
 		}
 		if (numberOfKills == enemies.size()) return false; 
@@ -613,6 +583,9 @@ public class Engine {
 	}
 
 	public void keepPlayerWithinBorders(Direction direction) {
+	/*	
+		Metoda koja se koristi za kretanje igraca
+	*/
 		switch (direction) {
 		case LEFT:
 			player.setImageByString("playerLeft");
@@ -634,16 +607,22 @@ public class Engine {
 	}
 	
 	private void moveUp(){
+	/*
+	 	Metoda koja pomera igraca gore samo ako se u odnusu na njegovu trenutnu poziciju, gore od njega nalaze merdevine
+	*/
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {			
 			if (brick.getX() == move.getX() && brick.getY() == move.getY()){
-				Brick tmpBrick = brick;
-				System.out.println("UP ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				// DEBUG
+				//Brick tmpBrick = brick;
+				//System.out.println("UP ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 					if (brick.isBrick() == true && brick.isLadderIMG() == true){
 						player.moveUp();
-						System.out.println("gore");
+						// DEBUG
+						//System.out.println("gore");
 					}else{
-						System.out.println("Neces gore!");
+						// DEBUG
+						//System.out.println("Neces gore!");
 					}
 					break;
 					
@@ -653,17 +632,23 @@ public class Engine {
 	}
 	
 	private void moveDown(){
+	/*
+	 	Metoda koja pomera igraca dole samo ako se u odnusu na njegovu trenutnu poziciju, dole od njega nalaze merdevine
+	*/
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {
 			if (brick.getX() == move.getX() && brick.getY()  == move.getY() + brickHeight){
-				Brick tmpBrick = brick;
-				System.out.println("DOWN ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				// DEBUG
+				//Brick tmpBrick = brick;
+				//System.out.println("DOWN ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 				
 				if (brick.isBrick() == true && brick.isLadderIMG() == true){
 					player.moveDown();
-					System.out.println("dole");
+					// DEBUG
+					//System.out.println("dole");
 				}else{
-					System.out.println("Neces dole!");
+					// DEBUG
+					//System.out.println("Neces dole!");
 				}
 				break;
 			}
@@ -671,17 +656,23 @@ public class Engine {
 	}
 	
 	private void moveLeft() {
+	/*
+	 	Metoda koja pomera igraca u levo samo ako se u odnusu na njegovu trenutnu poziciju, dole levo od njega nalazi cigla ili merdevine
+	*/
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {
 			if (brick.getX() >= move.getX() - brickWidth  && brick.getY() == move.getY() + brickHeight){
-				Brick tmpBrick = brick;
-				System.out.println("LEFT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				// DEBUG
+				//Brick tmpBrick = brick;
+				//System.out.println("LEFT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 				
 				if (brick.isBrick() == true && (brick.isBrickIMG() == true || brick.isLadderIMG() == true)){
 					player.moveLeft();
-					System.out.println("levo");
+					// DEBUG
+					//System.out.println("levo");
 				}else{
-					System.out.println("Nije cigla LEVO");
+					// DEBUG
+					//System.out.println("Nije cigla LEVO");
 				}
 				break;
 			}
@@ -689,43 +680,59 @@ public class Engine {
 	}
 	
 	private void moveRight() {
+	/*
+	 	Metoda koja pomera igraca u desno samo ako se u odnusu na njegovu trenutnu poziciju, dole desno od njega nalazi cigla ili merdevine
+	*/
+		
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {
 			if (brick.getX() >= move.getX() + brickWidth - Player.STEP && brick.getY() == move.getY() + brickHeight){
-				Brick tmpBrick = brick;
-				System.out.println("RIGHT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+				
+				// DEBUG
+				//Brick tmpBrick = brick;
+				//System.out.println("RIGHT ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
 				
 				if (brick.isBrick() == true && (brick.isBrickIMG() == true || brick.isLadderIMG() == true)){
-					System.out.println("desno");
+					// DEBUG
+					//System.out.println("desno");
 					player.moveRight();
 				}else{
-					System.out.println("Nije cigla DESNO");
+					// DEBUG
+					//System.out.println("Nije cigla DESNO");
 				}
 				break;
 			}
 		}
 	}
 	
-	private Direction overlapsFromLeftOrRight(Rectangle bullet, Rectangle obstacle){ // obstacles && bullet
-		
+	private Direction overlapsFromLeftOrRight(Rectangle bullet, Rectangle obstacle){
+	/*
+		Metoda koja proverava da li je doslo do preklapanja bullet-a i prepreke i sa koje strane (leve ili desne)
+	*/
 		if ((int)bullet.getX() + Character.IMG_WIDTH >= (int)obstacle.getX()){ 
 			if (bullet.intersects(obstacle)){
-				System.out.println("Direction.LEFT");
+				// DEBUG
+				//System.out.println("Direction.LEFT");
 				return Direction.LEFT;
 			}
 		}
 		
 		if ((int)bullet.getX() <= (int)obstacle.getX() + brickWidth){ 
 			if (bullet.intersects(obstacle)){
-				System.out.println("Direction.RIGHT");
+				// DEBUG
+				//System.out.println("Direction.RIGHT");
 				return Direction.RIGHT;
 			}
 		}
 		return Direction.NOTHING;
 	}
 	
-	
 	public void fireBullets(boolean space, boolean left, boolean right){
+	/*
+		Metoda koja na osnovu key press kombinacije u GUI-ju ispaljuje metkove u odredjenom pravcu (levo || desno)
+		player.destroyBullets() sluzi da ukloni iz liste sve metkove koji izlaze van okvira ekrana (800x600)
+	*/
+		
 		if (space == true){
 			if (right == true){
 				player.fire(Direction.RIGHT);
@@ -736,18 +743,23 @@ public class Engine {
 		}
 		player.destroyBullets();
 	}
+
+	public void killAllEnemies(){
+		/* Metoda koja sluzi za brze prelazenje nivo - cisto radi demonstracije */
+		enemies.clear();
+	}
 	
 	public void removeAll(){
-		hidePlayer();
+	/*
+		Metoda koja sklanja sve sa ekrana, tj. koristim je kad je kraj igre i pojavljuje se GAME OVER slika i dialogBox
+	*/
+		
+		player.hide();
 		enemies.clear();
 		levelObstacles.clear();
 		player.getFiredBullets().clear();
 	}
-	
-	public void hidePlayer(){
-		player.hide();
-	}
-	
+
 	public void moveBullets(){
 		player.moveBullets();
 	}

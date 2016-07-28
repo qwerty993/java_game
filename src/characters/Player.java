@@ -125,6 +125,10 @@ public class Player extends Character{
 	}
 	
 	public void destroyBullets(){
+	/*
+		Metoda koja sluzi da ukloni metak iz liste ispaljenih metkova ako taj metak izadje iz okvira ekrana (800 x 600)
+	*/
+		
 		for (int i = 0; i < firedBullets.size(); i++) {
 			if (firedBullets.get(i) != null){
 				Bullet tmpBullet = firedBullets.get(i);
@@ -135,6 +139,9 @@ public class Player extends Character{
 	}
 		
 	public void moveBullets(){		
+	/*
+		Metoda koja sluzi da pomera sve metkove u odredjenom pravcu, koje je player ispalio.
+	*/
 		for (Bullet bullet : firedBullets) {
 			if (bullet != null){
 				moveBullet = new Point(bullet.getBulletPosition());
@@ -160,14 +167,41 @@ public class Player extends Character{
 		}
 	}
 	
+	public boolean collisionWithEnemy(boolean collisionHappend){
+	/*
+		Metoda koja sluzi da smanji player-u health nakon sto se desila kolizija 
+		playera i nekog od enemy-ja. Takodje ova metoda vodi racuna i o tome koliko je zivota
+		player-u  ostalo. Ako je broj zivota == 0 i health == 0, tada je kraj igre i metoda vraca
+		true, u suprotnom igra se nastavlja i metoda vraca false
+	*/
+		boolean endOfGame = false;
+		setHealth(getHealth() - (int)(getHealth() * 0.1) - 1);
+		
+		if (getHealth() <= 0){
+			int numOfLives = getNumberOfLives();
+			// DEBUG
+			//System.out.println("Ostalo zivota: " + numOfLives);
+			if ( numOfLives > 0){
+				setHealth(100); // ponovo ima 100% health-a
+				--numOfLives;
+				setNumberOfLives(numOfLives); // smanjio mu se jedan zivot
+			}else{
+				endOfGame = true;
+			}
+		}
+		
+		return endOfGame;
+	}
+	
 	public void hide(){
+		/* Metoda hide() sluzi samo da promeni koordinate player-a i time skloni player-a sa ekrana */
 		setCurrentPosition(new Point(1000, 1000));
 	}
 	
 	public List<Bullet> getFiredBullets() {
 		return firedBullets;
 	}
-	
+
 	public static int getWidthOfPlayer() {
 		return Player.IMG_WIDTH;
 	}
@@ -175,5 +209,4 @@ public class Player extends Character{
 	public static int getHeightOfPlayer() {
 		return Player.IMG_HEIGHT;
 	}
-	
 }

@@ -8,7 +8,6 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
-
 //import Sound.Sounds;
 import bullet.Bullet;
 
@@ -26,9 +25,6 @@ public class Enemy extends Character implements Runnable{
 	
 	private int borderLeft;
 	private int borderRight;
-	
-	//private volatile boolean enemyAlive; // PROBA
-	
 	
 	// obrisi posle, SLUZI SAMO ZA PROVERU
 	static int brojEnemija = 0;
@@ -62,43 +58,67 @@ public class Enemy extends Character implements Runnable{
 
 	@Override
 	public void run() {
-		while (!Thread.currentThread().isInterrupted() && enemyAlive) {
-			
-		//while (enemyAlive == true){
-		//while (!Thread.currentThread().isInterrupted()) {
-		
-		// random kretanje levo desno
+		boolean levo = r.nextBoolean(); // promenljiva koja sluzi za random
+										// odabir smera pocetnog kretanja
+										// enemy-ja
 
-			if (r.nextInt(2) == 0){
-				try {
-					//Thread.sleep(r.nextInt((SPEED * (int)getSpeed()) * 2));
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		while (!Thread.currentThread().isInterrupted() && enemyAlive) {
+
+			if (levo) {
+				while (getCurrentX() > borderLeft) {
+					setDisplayedFirst(!isDisplayedFirst()); // flipujem trenutnu
+															// sliku
+					moveLeft();
+					
+					try {
+						Thread.sleep(300);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
+					setImage(isDisplayedFirst()); // setujem novu sliku
+
+					if (getCurrentX() - 20 <= borderLeft) {
+						levo = !levo;
+						break;
+					}
+
 				}
-				moveLeft();
-			}else{
-				try {
-					//Thread.sleep(r.nextInt((SPEED * (int)getSpeed()) * 3));
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				moveRight();
 			}
-		
+
+			if (!levo) {
+				while (getCurrentX() + 64 < borderRight) {
+					setDisplayedFirst(!isDisplayedFirst()); // flipujem trenutnu
+															// sliku
+					moveRight();
+					
+					try {
+						Thread.sleep(300);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
+					setImage(isDisplayedFirst()); // setujem novu sliku
+
+					if (getCurrentX() + 64 >= borderRight) {
+						levo = !levo;
+						break;
+					}
+
+				}
+			}
 		}
-		
-		//DEBUG
-		System.out.println("ENEMY number: " + rbrEnemija + " --> DEAD");
-		// ---------------------------------
+
+		// DEBUG
+		//System.out.println("ENEMY number: " + rbrEnemija + " --> DEAD");
 	}
 		
 
 	
-	// KOLIZIJA ENEMIJA I BULLETA NE RADI KAKO TREBA, NEKAD JAVI NULL_POINTER_EXCEPTION
-	
 	public void collisonWithBullet(boolean collisionBetweenEnemyAndBullet){
+	/*
+		Kolizija enemy-ja i bullet-a. Metoda sluzi da skine healht enemy-ju
+	*/
 		if (collisionBetweenEnemyAndBullet == true){
 			this.setCollision(true);
 			int currentHealth = getHealth() - Bullet.BULLET_DAMAGE - r.nextInt(Bullet.BULLET_DAMAGE);
@@ -166,7 +186,7 @@ public class Enemy extends Character implements Runnable{
 		int x = (int)moveLeft.getX();
 		int y = (int)moveLeft.getY();
 		
-		if (x - STEP >= borderLeft + 10){ 		// >= 0
+		if (x - STEP >= borderLeft + 10){ 		
  			moveLeft.setLocation(x - STEP , y);
 		}
 		
@@ -180,7 +200,7 @@ public class Enemy extends Character implements Runnable{
 		int y = (int)moveRight.getY();
 		
 	
-		if (x + STEP <= borderRight - 10){  // <= getWidth()
+		if (x + STEP <= borderRight - 10){  
 			moveRight.setLocation(x + STEP, y);
 		}
 		

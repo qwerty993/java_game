@@ -47,9 +47,7 @@ public class Canvas extends JComponent {
 		for (int i = 0; i < engine.getEnemies().size(); i++) {
 			Enemy enemy = engine.getEnemies().get(i);
 			if (enemy != null){
-				enemy.setDisplayedFirst(!enemy.isDisplayedFirst()); // konstantno smenjujem 2 slike
-	            enemy.setImage(enemy.isDisplayedFirst());
-	            if (enemy.isEnemyAlive() == true){
+				if (enemy.isEnemyAlive() == true){
 	            	g.drawImage(enemy.getImage(), enemy.getCurrentX(), enemy.getCurrentY(), enemy.getWidthOfEnemy(), enemy.getHeightOfEnemy(), null);
 	            }
 			}

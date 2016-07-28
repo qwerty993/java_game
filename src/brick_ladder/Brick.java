@@ -11,12 +11,11 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import characters.Character;
 
 public class Brick extends Rectangle {
 	private static final long serialVersionUID = 1L;
-	private static final int BRICK_WIDTH = Character.IMG_WIDTH;
-	private static final int BRICK_HEIGHT = Character.IMG_HEIGHT;
+	public static final int BRICK_WIDTH = 64;
+	public static final int BRICK_HEIGHT = 68;
 	
 	private static String path = System.getProperty("user.dir") + "/bin/Resources/Images/";
 	private static File file; 
@@ -82,7 +81,10 @@ public class Brick extends Rectangle {
 		return brickImage;
 	}	
 	
-	public static List<Brick> matrixOfEmptyBricks(){		
+	public static List<Brick> listOfEmptyBricks(){
+	/*	
+		Metoda koja sluzi da kreira listu svih blokova (default: empty bricks)
+	*/
 		levelObstacles = new ArrayList<Brick>();
 		
 		for (int i = 0; i <= 800; ) {
@@ -94,8 +96,11 @@ public class Brick extends Rectangle {
 		}
 		return levelObstacles;
 	}
-	
+
 	public Brick getBrick(int x, int y){
+	/*
+		Metoda vraca brick koji ima trazene koordinate, u suprotnom vraca null
+	*/
 		for (Brick brick : levelObstacles) {
 			if (brick.getX() == x && brick.getY() == y)
 				return brick;
@@ -103,16 +108,14 @@ public class Brick extends Rectangle {
 		return null;
 	}
 
-	public void setIsBrickAndIsLadder(boolean isBrickIMG, boolean isLadderIMG, boolean brick){
+	public void setIsBrickAndIsLadder(boolean isBrickIMG, boolean isLadderIMG, boolean brick){		
+	/*
+		Metoda koja se koristi za lakse setovanje slike za odredjeni blok.
+	*/	
 		this.isBrickIMG = isBrickIMG;
 		this.isLadderIMG = isLadderIMG;
 		this.brick = brick;
 		if (brick == true) readImage(isBrickIMG, isLadderIMG);
 	}
-
-	public String getFileName() {
-		return fileName;
-	}
-	
 	
 }

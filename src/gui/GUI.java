@@ -57,7 +57,7 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		engine = new Engine(1); 
 		canvas = new Canvas(engine);
 		
-		timer = new Timer(20, new ActionListener() {
+		timer = new Timer(16, new ActionListener() {	// 60 fps
 			@Override
 			public void actionPerformed(ActionEvent e) {
 		        engine.moveBullets();
@@ -68,7 +68,8 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		});
 
 		timer.start();
-
+		
+		
 		getContentPane().add(canvas);
 		setFooter();
 		
@@ -94,7 +95,6 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		lblHealth = new JLabel("HEALTH: 100%", SwingConstants.CENTER);
 		lblHealth.setForeground(Color.WHITE);
 		lblHealth.setFont(fontSize20);
-		
 		
 		lblLives = new JLabel("LIVES: 3", SwingConstants.CENTER); 
 		lblLives.setForeground(Color.WHITE);
@@ -126,23 +126,19 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	
 	public void refreshGUI(){	
 		if (engine.isEnd()){
-			engine.removeAll();
-			canvas.repaint();
-			dialogBoxHandler("Thank you for playing!\nNew game?");
+			newGame("Thank you for playing!\nNew game?");
 		}
 		
 		if (engine.isNextLevel()){
 			engine.init(engine.getLevel());
-			System.out.println("Next level activated! " + engine.getLevel());
+			// DEBUG
+			//System.out.println("Next level activated! " + engine.getLevel());
 			refreshFooter();
 			canvas.repaint();
 		}
 		
 		if (engine.isWin()){
-			engine.removeAll();
-			canvas.repaint();
-			dialogBoxHandler("Congratulations!\nYou win!\nNew game?");
-			refreshFooter();
+			newGame("Congratulations!\nYou win!\nNew game?");
 		}
 		
 		if (engine.isCollision()) 
@@ -153,30 +149,26 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		
 	}
 	
+	private void newGame(String message){
+		engine.removeAll();
+		canvas.repaint();
+		dialogBoxHandler(message);
+	}
+	
 	private void dialogBoxHandler(String message){
 		timer.stop();
 		int response = JOptionPane.showConfirmDialog(this, message, "Game over!", JOptionPane.YES_NO_OPTION);
 		
-		
 		if (response == JOptionPane.YES_OPTION){
-			System.out.println("ovde puca");
-			
-			
 			engine.setLevel(1);
 			engine.init(engine.getLevel());
 			
 			if (engine.getLevel() != 1) engine.removeAll();
 			
-			refreshFooter();
-			
-			/* ima u timer.start();
-			canvas.repaint(); 
-			refreshGUI();
-			*/
-			
+			refreshFooter();			
 			timer.start();
+			
 		}else{
-			//engine.stopThreads();
 			dispose();
 			System.exit(0);
 		}
@@ -235,7 +227,6 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 				default:
 					break;
 			}
-			
 						
 			engine.fireBullets(space, left, right);
 			refreshGUI();

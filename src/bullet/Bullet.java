@@ -11,12 +11,16 @@ import characters.Character;
 import engine.Direction;
 
 public class Bullet implements BulletInterface{
+	
+	private static String path = System.getProperty("user.dir") + "/bin/Resources/Images/";
+	private static File file; 
+	
 	public BufferedImage bulletImage;
 	private Point bulletPosition;
 	private boolean left;
-	
+		
 	public Bullet(Point startPosition){
-		bulletPosition = new Point(startPosition.x + 60, startPosition.y + 46);
+		bulletPosition = new Point(startPosition.x + 50, startPosition.y + 46);
 		setBulletImage("bullet");
 	}
 	
@@ -25,8 +29,8 @@ public class Bullet implements BulletInterface{
 			bulletImage = null;
 		}else{
 			try {
-		    	String path = System.getProperty("user.dir") + "/bin/Resources/Images/" + imageStr + ".png";
-		    	File file = new File(path);
+				path = System.getProperty("user.dir") + "/bin/Resources/Images/" + imageStr + ".png";
+				file = new File(path);
 		    	bulletImage = ImageIO.read(file);	    	
 		    } catch (IOException ioe) {
 		    	ioe.printStackTrace();
@@ -36,6 +40,9 @@ public class Bullet implements BulletInterface{
 
 	@Override
 	public void spawnBullet(Direction direction) {
+	/*
+		Metofa koja ispaljuje metak u odredjenom pravcu (levo ili desno)
+	*/
 		if (direction == Direction.RIGHT){
 			if (bulletPosition.getX() + BULLET_SPEED <= Character.SCREEN_WIDTH){
 				bulletPosition.setLocation((int)bulletPosition.getX() + BULLET_SPEED, (int)bulletPosition.getY());
@@ -43,17 +50,11 @@ public class Bullet implements BulletInterface{
 			}
 		}else if (direction == Direction.LEFT){
 			if (bulletPosition.getX() - BULLET_SPEED >= 0){
-				bulletPosition.setLocation((int)bulletPosition.getX() - BULLET_SPEED - BULLET_WIDTH - Character.IMG_WIDTH + 10, (int)bulletPosition.getY());
+				bulletPosition.setLocation((int)bulletPosition.getX() - BULLET_SPEED - BULLET_WIDTH - Character.IMG_WIDTH + 25, (int)bulletPosition.getY());
 				left = true;
 			}
 		}
 	}	
-
-	public boolean equals(Bullet bullet) {
-		if (this.getBulletPosition().getX() == bullet.getBulletPosition().getX() && this.getBulletPosition().getY() == bullet.getBulletPosition().getY())
-			return true;
-		return false;
-	}
 
 	public BufferedImage getBulletImage() {
 		return bulletImage;
@@ -62,7 +63,7 @@ public class Bullet implements BulletInterface{
 	public int getWidthOfBullet() {
 		return BULLET_WIDTH;
 	}
-
+	
 	public int getHeightOfBullet() {
 		return BULLET_HEIGHT;
 	}
@@ -72,6 +73,10 @@ public class Bullet implements BulletInterface{
 	}
 
 	public boolean isLeft() {
+	/*
+		Metoda sluzi da znam u kom smeru je ispaljen metak, da bih znao kako 
+	 	da ga prikazem u pri pozivanju metode paintBullets u Canvas klasi 
+	 */
 		return left;
 	}
 
