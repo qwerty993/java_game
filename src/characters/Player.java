@@ -14,8 +14,8 @@ import bullet.Bullet;
 
 
 public class Player extends Character{
-	public static final int STEP = 64/2; 
-	public static final int JUMP = 68;
+	public static final int STEP = 64/2/2; 
+	public static final int JUMP = 68/2;
 	
 	private static Point move;	// za kretanje: Left, Right, Up, Down
 	private static int x;		
@@ -27,16 +27,15 @@ public class Player extends Character{
 	private BufferedImage frontImg, leftImg, rightImg;
 	private List<Bullet> firedBullets;
 	
-	public Player(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {
-		super(startPosition, health, speed, numberOfLives, collision);
+	public Player(Point startPosition, int health, int numberOfLives, boolean collision) {
+		super(startPosition, health, numberOfLives, collision);
 		frontImg = setImage("player");
 		leftImg = setImage("playerLeft");
 		rightImg = setImage("playerRight");
-		super.image = frontImg;
+		super.setImage(frontImg);
 		firedBullets = new ArrayList<Bullet>();
 	}	
 		
-	
 	@Override
 	public void moveLeft() {
 		move = super.getCurrentPosition();
@@ -106,11 +105,11 @@ public class Player extends Character{
 	
 	public void setImageByString(String imageString){
 		if (imageString == "player"){
-			super.image = frontImg;
+			super.setImage(frontImg); 
 		}else if(imageString == "playerLeft"){
-			super.image = leftImg;
+			super.setImage(leftImg);
 		}else{
-			super.image = rightImg;
+			super.setImage(rightImg);
 		}
 	}
 	
@@ -128,7 +127,6 @@ public class Player extends Character{
 	/*
 		Metoda koja sluzi da ukloni metak iz liste ispaljenih metkova ako taj metak izadje iz okvira ekrana (800 x 600)
 	*/
-		
 		for (int i = 0; i < firedBullets.size(); i++) {
 			if (firedBullets.get(i) != null){
 				Bullet tmpBullet = firedBullets.get(i);

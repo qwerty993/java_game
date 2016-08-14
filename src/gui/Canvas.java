@@ -1,5 +1,8 @@
 package gui;
 
+
+import engine.Engine;
+
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -14,7 +17,6 @@ import brick_ladder.Brick;
 import bullet.Bullet;
 import characters.Enemy;
 import characters.Player;
-import engine.Engine;
 
 public class Canvas extends JComponent {
 	private static final long serialVersionUID = 1L;
@@ -28,7 +30,6 @@ public class Canvas extends JComponent {
 		setPreferredSize(new Dimension(800, 600 - 32));
 		this.engine = engine;
 	}
-		
 	
 	@Override
 	public void paintComponent(Graphics g) {
@@ -36,9 +37,9 @@ public class Canvas extends JComponent {
 		g.drawImage(backgroundImage, 0, 0, null); 	// setujem background
 
 		paintLevel(g);	
-		paintPlayer(g);
 		paintEnemies(g);
 		paintBullets(g);
+		paintPlayer(g);
 		
 		repaint();
 	}

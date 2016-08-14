@@ -8,7 +8,6 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
-//import Sound.Sounds;
 import bullet.Bullet;
 
 public class Enemy extends Character implements Runnable{
@@ -26,25 +25,24 @@ public class Enemy extends Character implements Runnable{
 	private int borderLeft;
 	private int borderRight;
 	
-	// obrisi posle, SLUZI SAMO ZA PROVERU
+	// SLUZI SAMO ZA PROVERU
 	static int brojEnemija = 0;
 	int rbrEnemija;
-	// ---------------------------------
 	
 	public Enemy(Point startPosition) {
-		this(startPosition, Difficulty.EASY.getDiffLevel(), 4f, 1, false);
+		this(startPosition, Difficulty.EASY.getDiffLevel(), 1, false);
 	}
 	
-	public Enemy(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {
-		this(startPosition, health, speed, numberOfLives, collision, "enemy11", "enemy12");
+	public Enemy(Point startPosition, int health, int numberOfLives, boolean collision) {
+		this(startPosition, health, numberOfLives, collision, "enemy11", "enemy12");
 	}
 	
-	public Enemy(Point startPosition, int health, double speed, int numberOfLives, boolean collision, String firstIMG, String secondIMG) {
-		super(startPosition, health, speed, numberOfLives, collision);
+	public Enemy(Point startPosition, int health, int numberOfLives, boolean collision, String firstIMG, String secondIMG) {
+		super(startPosition, health, numberOfLives, collision);
 		r = new Random();
 		enemyImgFirst = setImage(firstIMG);
 		enemyImgSecond = setImage(secondIMG);
-		super.image = enemyImgFirst;
+		super.setImage(enemyImgFirst);
 		displayedFirst = true;
 		enemyAlive = true;
 		
@@ -54,16 +52,15 @@ public class Enemy extends Character implements Runnable{
     	
     	//DEBUG
     	rbrEnemija = ++brojEnemija;
-	}
-
+	}	
+	
 	@Override
 	public void run() {
 		boolean levo = r.nextBoolean(); // promenljiva koja sluzi za random
 										// odabir smera pocetnog kretanja
 										// enemy-ja
 
-		while (!Thread.currentThread().isInterrupted() && enemyAlive) {
-
+		while (!Thread.currentThread().isInterrupted() && enemyAlive) {	
 			if (levo) {
 				while (getCurrentX() > borderLeft) {
 					setDisplayedFirst(!isDisplayedFirst()); // flipujem trenutnu
@@ -87,7 +84,7 @@ public class Enemy extends Character implements Runnable{
 			}
 
 			if (!levo) {
-				while (getCurrentX() + 64 < borderRight) {
+				while (getCurrentX() + Enemy.IMG_WIDTH < borderRight) {
 					setDisplayedFirst(!isDisplayedFirst()); // flipujem trenutnu
 															// sliku
 					moveRight();
@@ -100,7 +97,7 @@ public class Enemy extends Character implements Runnable{
 					
 					setImage(isDisplayedFirst()); // setujem novu sliku
 
-					if (getCurrentX() + 64 >= borderRight) {
+					if (getCurrentX() + Enemy.IMG_WIDTH >= borderRight) {
 						levo = !levo;
 						break;
 					}
@@ -108,12 +105,10 @@ public class Enemy extends Character implements Runnable{
 				}
 			}
 		}
-
+		
 		// DEBUG
 		//System.out.println("ENEMY number: " + rbrEnemija + " --> DEAD");
 	}
-		
-
 	
 	public void collisonWithBullet(boolean collisionBetweenEnemyAndBullet){
 	/*
@@ -124,8 +119,8 @@ public class Enemy extends Character implements Runnable{
 			int currentHealth = getHealth() - Bullet.BULLET_DAMAGE - r.nextInt(Bullet.BULLET_DAMAGE);
 			
 			// DEBUG
-			System.out.println("bullet HIT ENEMY num: " + rbrEnemija);
-			System.out.println("Enemy (" + rbrEnemija + ") current HEALTH after HIT : " + currentHealth);
+			//System.out.println("bullet HIT ENEMY num: " + rbrEnemija);
+			//System.out.println("Enemy (" + rbrEnemija + ") current HEALTH after HIT : " + currentHealth);
 			
 			
 			if (currentHealth > 0){
@@ -143,6 +138,9 @@ public class Enemy extends Character implements Runnable{
 	}
 	
 	public void collisonWithPlayer(boolean collisionBetweenPlayerAndEnemy){ 
+	/*
+		Kolizija enemy-ja i player-a. Metoda sluzi da skine healht enemy-ju
+	*/
 		if (collisionBetweenPlayerAndEnemy == true){
 			this.setCollision(true);
 			int currentHealth = getHealth() - (int)(getHealth() * 0.15) - 1;
@@ -163,23 +161,7 @@ public class Enemy extends Character implements Runnable{
 			}
 		}
 	}
-		
-	
-	
-	public void setEnemyMoveBorders(int leftX, int rightX){
-		borderLeft = leftX;
-		borderRight = rightX;
-	}
-	
-	public int getBorderLeft() {
-		return borderLeft;
-	}
 
-	public int getBorderRight() {
-		return borderRight;
-	}
-
-	
 	@Override
 	public void moveLeft() {
 		Point moveLeft = new Point(super.getCurrentPosition());
@@ -228,18 +210,24 @@ public class Enemy extends Character implements Runnable{
 	
 	public void setImage(boolean isFirst){
 		if (isFirst == true)
-			super.image = enemyImgFirst;
+			super.setImage(enemyImgFirst);
 		else
-			super.image = enemyImgSecond;
+			super.setImage(enemyImgSecond);
+	}
+	
+	public void setEnemyMoveBorders(int leftX, int rightX){
+		/* Metoda koja setuje granice za kretanje enemy-ja po X osi */
+		borderLeft = leftX;
+		borderRight = rightX;
+	}
+	
+	public int getBorderLeft() {
+		return borderLeft;
 	}
 
-	public BufferedImage getEnemyImg() {
-		return super.getImage();
-	}
-
-	public void setEnemyImg(BufferedImage enemyImg) {
-		super.image = enemyImg;
-	}
+	public int getBorderRight() {
+		return borderRight;
+	}	
 
 	public boolean isDisplayedFirst() {
 		return displayedFirst;

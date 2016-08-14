@@ -11,7 +11,6 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-
 public class Brick extends Rectangle {
 	private static final long serialVersionUID = 1L;
 	public static final int BRICK_WIDTH = 64;
@@ -61,25 +60,6 @@ public class Brick extends Rectangle {
 		}
 	}
 	
-	public void setBrick(boolean isBrick){
-		brick = isBrick;
-	}
-	
-	public boolean isBrick(){
-		return brick;
-	}
-	
-	public boolean isBrickIMG() {
-		return isBrickIMG;
-	}
-
-	public boolean isLadderIMG() {
-		return isLadderIMG;
-	}
-
-	public BufferedImage getBrickImage() {
-		return brickImage;
-	}	
 	
 	public static List<Brick> listOfEmptyBricks(){
 	/*	
@@ -118,4 +98,24 @@ public class Brick extends Rectangle {
 		if (brick == true) readImage(isBrickIMG, isLadderIMG);
 	}
 	
+
+	public void setBrick(boolean isBrick){
+		brick = isBrick;
+	}
+	
+	public boolean isBrick(){
+		return brick;
+	}
+	
+	public boolean isBrickIMG() {
+		return isBrickIMG;
+	}
+
+	public boolean isLadderIMG() {
+		return isLadderIMG;
+	}
+
+	public BufferedImage getBrickImage() {
+		return brickImage;
+	}		
 }

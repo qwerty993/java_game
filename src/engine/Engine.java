@@ -13,6 +13,7 @@ import characters.Enemy;
 import characters.Enemy2;
 import characters.Enemy3;
 import characters.Player;
+import engine.Direction;
 
 public class Engine {
 	private static final int PLAYER_START_X = 0;
@@ -30,11 +31,10 @@ public class Engine {
 	private boolean endOfGame;
 	private int level;
 	private Brick tmpBrick;		// promenljiva koja sluzi da ne bih non stop instancirao nove Brick nego koristim jednu uvek
-	
+		
 	public Engine(int lvl){
 		level = lvl;
-		
-		player = new Player(new Point(PLAYER_START_X, PLAYER_START_Y), 100, 4f, 3, false);
+		player = new Player(new Point(PLAYER_START_X, PLAYER_START_Y), 100, 3, false);
 		enemies = new ArrayList<Enemy>();
 		levelObstacles = new ArrayList<Brick>(); 
 		threads = new ArrayList<Thread>();
@@ -42,10 +42,10 @@ public class Engine {
 		init(level);
 	}
 	
-	
 	public void init(int level){
 		// DEBUG
 		//System.out.println("Inicijalizujem nivo: " + level);
+		
 		if (level == 1){
 			init1();
 		}else if (level == 2){
@@ -100,7 +100,7 @@ public class Engine {
 		enemies.add(new Enemy2(new Point(448, 500 - 68*4))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(448-64, 576);
 		
-		enemies.add(new Enemy(new Point(128, 500 - 68*5))); 	// zeleni
+		enemies.add(new Enemy(new Point(129, 500 - 68*5))); 	// zeleni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(64 + 64, 192 + 64);
 		
 		enemies.add(new Enemy3(new Point(670, 500 - 68*7)));	// plavi
@@ -223,7 +223,7 @@ public class Engine {
 	private void initObstaclesLevelTwo() { 
 		levelObstacles.clear();
 		baseInitForObstacles();
-				
+		
 		for (int i = 0; i < 3; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 2){
@@ -336,32 +336,26 @@ public class Engine {
 		enemies.add(new Enemy2(new Point(128, 500 - 68))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(64, 750);
 		
-		enemies.add(new Enemy3(new Point(600, 500 - 68*3))); // plavi
+		enemies.add(new Enemy3(new Point((640 + 64 + 512)/2, 500 - 68*3))); // plavi
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(512, 640+64);
+		
+		enemies.add(new Enemy2(new Point((640 - 64 + 512)/2, 500 - 68*3))); // crveni
 		enemies.get(enemies.size()-1).setEnemyMoveBorders(512, 640);
 		
-		enemies.add(new Enemy2(new Point(690, 500 - 68*3))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(640, 704);
+		enemies.add(new Enemy3(new Point(64 + 10, 500 - 68*3))); // plavi
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 256);
 		
-		enemies.add(new Enemy3(new Point(64, 500 - 68*3))); // plavi
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(64, 192);
-		
-		enemies.add(new Enemy(new Point(0, 500 - 68*4))); // zeleni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(0, 0);
-		
-		enemies.add(new Enemy2(new Point(320, 500 - 68*4))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(256, 384);
+		enemies.add(new Enemy2(new Point(315, 500 - 68*4))); // crveni
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(256, 384 + 64);
 		
 		enemies.add(new Enemy3(new Point(250, 500 - 68*6))); // plavi
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(128, 448);
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(64, 448);
 		
-		enemies.add(new Enemy(new Point(140, 500 - 68*6))); // zeleni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(128, 250);
+		enemies.add(new Enemy3(new Point(192, 500 - 68*6))); // plavi
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(128, 300);
 		
-		enemies.add(new Enemy3(new Point(64, 500 - 68*7))); // plavi
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(64, 64);
-		
-		enemies.add(new Enemy2(new Point(530, 500 - 68*7))); // crveni
-		enemies.get(enemies.size()-1).setEnemyMoveBorders(512, 640);
+		enemies.add(new Enemy2(new Point(700, 500 - 68*7))); // crveni
+		enemies.get(enemies.size()-1).setEnemyMoveBorders(512 + 64, 800);
 		
 		initObstaclesLevelThree();
 		
@@ -369,31 +363,19 @@ public class Engine {
 		
 	}
 		
-	private void initObstaclesLevelThree() { // dodati merdevine
+	private void initObstaclesLevelThree() { 
 		levelObstacles.clear();
 		baseInitForObstacles();
 		
-		for (int i = 1; i < 12; i++) {
-			if (i < 4 || i > 7){
-				for (Brick brick : levelObstacles) {
-					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 2){
-						brick.setIsBrickAndIsLadder(true, false, true);
-					}
+		for (int i = 4; i < 7; i++) {
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
+					brick.setIsBrickAndIsLadder(true, false, true);
 				}
 			}
 		}
 		
-		for (int i = 0; i < 7; i++) {
-			if (i == 0 || i > 3){
-				for (Brick brick : levelObstacles) {
-					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 3){
-						brick.setIsBrickAndIsLadder(true, false, true);
-					}
-				}
-			}
-		}
-		
-		for (int i = 1; i < 8; i++) {
+		for (int i = 0; i < 8; i++) {
 			for (Brick brick : levelObstacles) {
 				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 5){
 					brick.setIsBrickAndIsLadder(true, false, true);
@@ -401,11 +383,63 @@ public class Engine {
 			}
 		}
 		
-		for (int i = 1; i < 11; i++) {
-			if (i == 1 || i > 7){
+		for (int i = 8; i < 13; i++) {
+			for (Brick brick : levelObstacles) {
+				if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+					brick.setIsBrickAndIsLadder(true, false, true);
+					
+					if (i == 8){
+						tmpBrick = null; 
+						for (int j = 3; j < 6; j++) {
+							tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+							tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+
+							if (j == 5){
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j + 1));
+								tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+							}
+							// DEBUG
+							//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+						}	
+					}
+				}
+			}
+		}
+		
+		for (int i = 0; i < 12; i++) {
+			if (i < 4 || i > 7){
 				for (Brick brick : levelObstacles) {
-					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 6){
+					if (brick.getX() == i * brickWidth && brick.getY() == 500 - brickHeight * 2){
 						brick.setIsBrickAndIsLadder(true, false, true);
+						
+						if (i == 0){
+							tmpBrick = null; 
+							for (int j = 1; j < 6; j++) {
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+								tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+
+								if (j == 2 || j == 5){
+									tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j));
+									tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+								}
+								// DEBUG
+								//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							}	
+						}
+						if (i == 11){
+							tmpBrick = null; 
+							for (int j = 1; j < 3; j++) {
+								tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * j);						
+								tmpBrick.setIsBrickAndIsLadder(false, true, true); // vertikala
+
+								if (j == 2){
+									tmpBrick = brick.getBrick(i * brickWidth, 500 - brickHeight * (j));
+									tmpBrick.setIsBrickAndIsLadder(true, true, true); // horizontala presek vertikala
+								}
+								// DEBUG
+								//System.out.println("INIT_2 ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
+							}	
+						}
 					}
 				}
 			}
@@ -415,12 +449,12 @@ public class Engine {
 	}
 
 	public void startThreads(){
-		/* Metoda koja startuje enemies */
+		/* Metoda koja startuje enemies */ 
 		threads.clear();
 		for (int i = 0; i < enemies.size(); i++) {
 		    Thread enemyThread = new Thread(enemies.get(i));
 		    threads.add(enemyThread);
-		    enemyThread.start();
+		    enemyThread.start();		    
 		 }
 	}
 	
@@ -441,6 +475,7 @@ public class Engine {
 		if (moreToKill() == true) return false;
 		else{
 			level++;
+			
 			if (isWin() == true){
 				// DEBUG
 				//System.out.println("Pobedio si!");
@@ -455,9 +490,20 @@ public class Engine {
 		return player.getX() < enemy.getX() + enemy.getWidth() && player.getX() + player.getWidth() > enemy.getX() && player.getY() < enemy.getY() + enemy.getHeight() && player.getY() + player.getHeight() > enemy.getY();  
 	}
 	
+	public boolean overlapsWithBullet(Rectangle enemy, Rectangle bullet, boolean isDirectionLeft){
+		/* 
+			Metoda koja ispituje da li je doslo do kolizije izmedju bullet-a i enemy-ja sa pomerenim koordinatama 
+			bullet-a u zavisnosti od smera kretanja bullet-a.
+		*/
+		
+		if (isDirectionLeft)
+			return overlaps(enemy, new Rectangle(new Point((int)bullet.getX() - ((int)bullet.getWidth() / 2), (int)bullet.getY()), new Dimension(bullet.getSize())));
+		return overlaps(enemy, new Rectangle(new Point((int)bullet.getX() + ((int)bullet.getWidth() / 2), (int)bullet.getY()), new Dimension(bullet.getSize())));  
+	}
+	
 	public boolean isCollisionWithBullet(){ 
 	/*	
-		Metoda koja proverava da li je doslo do kolizije izmedju nekog bullet-a i nekog od enemy-ja i
+		Metoda koja proverava da li je doslo do kolizije izmedju nekog bullet-a i getLocation()nekog od enemy-ja i
 		ako je doslo do kolizije, skidaju se health-i pogodjenom enemy-ju, a metak kojim je enemy
 		pogodjen se unistava 
 	*/
@@ -483,15 +529,15 @@ public class Engine {
 					if (bullet != null){	
 												
 						bulletRectangle = new Rectangle(new Point(bullet.getBulletPosition()), new Dimension(Bullet.BULLET_WIDTH, Bullet.BULLET_HEIGHT));
-						
-						if (overlaps(bulletRectangle, enemyRectangle) == true){
+						// samo if (overlaps(bulletRectangle, enemyRectangle) == true){
+						if (overlapsWithBullet(bulletRectangle, enemyRectangle, bullet.isLeft()) == true){
 							//Sounds.HIT.play();
 							
 							collisionHappend = true;
 							bullet.setBulletImage(null);
 							enemy.collisonWithBullet(true);
 													
-							bullet = null;	// Metak svako unistavam ako je player pogodjen
+							bullet = null;	// Metak svako unistavam ako je enemy pogodjen
 							firedBullets.set(j, null);
 							
 							if (enemy.isEnemyKilled() == true){
@@ -563,7 +609,6 @@ public class Engine {
 				}
 			}
 		}
-		
 	}
 	
 	public boolean moreToKill(){
@@ -612,21 +657,19 @@ public class Engine {
 	*/
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {			
-			if (brick.getX() == move.getX() && brick.getY() == move.getY()){
+			if (brick.getX() == move.getX() && brick.getY() == move.getY() || brick.getX() == move.getX() && brick.getY() == move.getY() + Player.JUMP){
 				// DEBUG
 				//Brick tmpBrick = brick;
 				//System.out.println("UP ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
-					if (brick.isBrick() == true && brick.isLadderIMG() == true){
-						player.moveUp();
-						// DEBUG
-						//System.out.println("gore");
-					}else{
-						// DEBUG
-						//System.out.println("Neces gore!");
-					}
-					break;
-					
-				
+				if (brick.isBrick() == true && brick.isLadderIMG() == true){
+					player.moveUp();
+					// DEBUG
+					//System.out.println("gore");
+				}else{
+					// DEBUG
+					//System.out.println("Neces gore!");
+				}
+				break;
 			} 
 		}
 	}
@@ -637,7 +680,7 @@ public class Engine {
 	*/
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {
-			if (brick.getX() == move.getX() && brick.getY()  == move.getY() + brickHeight){
+			if (brick.getX() == move.getX() && brick.getY() == move.getY() + brickHeight || brick.getX() == move.getX() && brick.getY()  == move.getY() + brickHeight - Player.JUMP){
 				// DEBUG
 				//Brick tmpBrick = brick;
 				//System.out.println("DOWN ( "+ tmpBrick.x +", "+ tmpBrick.y+" ): isLadder == " + tmpBrick.isLadderIMG() + ", isBrickIMG == " + tmpBrick.isBrickIMG() + ", isBrick == " + tmpBrick.isBrick());
@@ -686,7 +729,7 @@ public class Engine {
 		
 		move = player.getCurrentPosition();
 		for (Brick brick : levelObstacles) {
-			if (brick.getX() >= move.getX() + brickWidth - Player.STEP && brick.getY() == move.getY() + brickHeight){
+			if (brick.getX() >= move.getX() + brickWidth - Player.STEP * 3 && brick.getY() == move.getY() + brickHeight){
 				
 				// DEBUG
 				//Brick tmpBrick = brick;
@@ -783,5 +826,4 @@ public class Engine {
 	public List<Brick> getLevelObstacles() {
 		return levelObstacles;
 	}
-	
 }

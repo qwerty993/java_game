@@ -10,20 +10,16 @@ public abstract class Character {
 	public static final int IMG_WIDTH = 64;
 	public static final int IMG_HEIGHT = 68;
 	
-	// double speed NE KORISTIM NIGDE, IMA DOSTA PREPRAVKE
-	
 	private int health;
-	private double speed;
 	private int numberOfLives;
 	private boolean collision;
 	private Point currentPosition;
-    public BufferedImage image;
+    private BufferedImage image;
 	
-	public Character(Point startPosition, int health, double speed, int numberOfLives, boolean collision) {
+	public Character(Point startPosition, int health, int numberOfLives, boolean collision) {
 		super();
 		this.currentPosition = startPosition;
 		this.health = health;
-		this.speed = speed;
 		this.numberOfLives = numberOfLives;
 		this.collision = collision;
 	}
@@ -37,14 +33,6 @@ public abstract class Character {
 
 	public void setHealth(int health) {
 		this.health = health;
-	}
-
-	public double getSpeed() {
-		return speed;
-	}
-
-	public void setSpeed(double speed) {
-		this.speed = speed;
 	}
 
 	public int getNumberOfLives() {
@@ -97,8 +85,11 @@ public abstract class Character {
 
 	public abstract BufferedImage setImage(String image);
 	
-	public BufferedImage getImage() {
-		return image;
+	public void setImage(BufferedImage image) {
+		this.image = image;
 	}
 	
+	public BufferedImage getImage() {
+		return image;
+	}	
 }

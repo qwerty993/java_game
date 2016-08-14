@@ -1,5 +1,8 @@
 package gui;
 
+
+import engine.Engine;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,7 +25,6 @@ import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
 import engine.Direction;
-import engine.Engine;
 
 public class GUI extends JFrame implements KeyEventDispatcher {
 	private static final long serialVersionUID = 1L;
@@ -47,7 +49,7 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	private Timer timer;
 	private Canvas canvas;
 	private Engine engine;
-
+	
 	public GUI() {
 		setTitle("Kill them all!");
 		
@@ -60,16 +62,14 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 		timer = new Timer(16, new ActionListener() {	// 60 fps
 			@Override
 			public void actionPerformed(ActionEvent e) {
-		        engine.moveBullets();
+				engine.moveBullets();
 		        engine.bulletOverlapsWithObstacle();
 		        refreshGUI();
 				canvas.repaint();
 			}			
 		});
+		timer.start(); 
 
-		timer.start();
-		
-		
 		getContentPane().add(canvas);
 		setFooter();
 		
@@ -125,42 +125,53 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 	}
 	
 	public void refreshGUI(){	
-		if (engine.isEnd()){
-			newGame("Thank you for playing!\nNew game?");
+		if (timer.isRunning()){
+			if (engine.isEnd()){
+				newGame("Thank you for playing!\nNew game?");
+			}
+			
+			if (engine.isNextLevel()){
+				newLevel("Next level?");
+				engine.init(engine.getLevel());
+				// DEBUG
+				//System.out.println("Next level activated! " + engine.getLevel());
+				refreshFooter();
+				canvas.repaint();
+			}
+			
+			if (engine.isWin()){
+				newGame("Congratulations!\nYou win!\nNew game?");
+			}
+			
+			if (engine.isCollision()) 
+				refreshFooter();
+			
+			if (engine.isCollisionWithBullet()) 
+				refreshFooter();
 		}
-		
-		if (engine.isNextLevel()){
-			engine.init(engine.getLevel());
-			// DEBUG
-			//System.out.println("Next level activated! " + engine.getLevel());
-			refreshFooter();
-			canvas.repaint();
-		}
-		
-		if (engine.isWin()){
-			newGame("Congratulations!\nYou win!\nNew game?");
-		}
-		
-		if (engine.isCollision()) 
-			refreshFooter();
-		
-		if (engine.isCollisionWithBullet()) 
-			refreshFooter();
-		
+	}
+	
+	private void newLevel(String message){
+		engine.removeAll();
+		canvas.repaint();
+		timer.stop();
+		dialogBoxHandler(message, "Level " + engine.getLevel() + " unlocked!", JOptionPane.OK_CANCEL_OPTION);
 	}
 	
 	private void newGame(String message){
 		engine.removeAll();
 		canvas.repaint();
-		dialogBoxHandler(message);
+		timer.stop();
+		dialogBoxHandler(message, "Game over!", JOptionPane.YES_NO_OPTION);
 	}
 	
-	private void dialogBoxHandler(String message){
-		timer.stop();
-		int response = JOptionPane.showConfirmDialog(this, message, "Game over!", JOptionPane.YES_NO_OPTION);
+	private void dialogBoxHandler(String message, String title, int typeOfJOptionPaneMessage){
+		int response = JOptionPane.showConfirmDialog(this, message, title, typeOfJOptionPaneMessage);
 		
 		if (response == JOptionPane.YES_OPTION){
-			engine.setLevel(1);
+			if (typeOfJOptionPaneMessage == JOptionPane.YES_NO_OPTION) 
+				engine.setLevel(1);
+			
 			engine.init(engine.getLevel());
 			
 			if (engine.getLevel() != 1) engine.removeAll();
@@ -173,8 +184,7 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 			System.exit(0);
 		}
 	}
-	
-		
+			
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
 		if (e.getID() == Event.KEY_RELEASE) {
@@ -223,7 +233,7 @@ public class GUI extends JFrame implements KeyEventDispatcher {
 				case KeyEvent.VK_TAB:
 					engine.killAllEnemies();	// za brzi prelazak nivo-a
 					break;
-					
+				
 				default:
 					break;
 			}
